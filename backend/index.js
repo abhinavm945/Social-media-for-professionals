@@ -2,7 +2,8 @@ import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import connectDB from "./utlis/db.js"; // Make sure this path is correct
+import connectDB from "./utlis/db.js";
+import userRoute from "./routes/user.route.js";
 
 dotenv.config();
 
@@ -18,6 +19,9 @@ const corsOptions = {
   credentials: true, // Corrected "Credential" to "credentials"
 };
 app.use(cors(corsOptions));
+
+//api
+app.use("/api/v1/user", userRoute);
 
 // Routes
 app.get("/", (req, res) => {
