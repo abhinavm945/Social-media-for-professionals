@@ -8,7 +8,7 @@ const conversationSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    message: [
+    messages: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Message",
@@ -20,7 +20,7 @@ const conversationSchema = new mongoose.Schema(
   }
 );
 
-export default Converstation = mongoose.model(
+export const Converstation = mongoose.model(
   "Converstation",
   conversationSchema
 );
