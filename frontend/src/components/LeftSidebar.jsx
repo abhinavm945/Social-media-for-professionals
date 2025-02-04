@@ -4,46 +4,22 @@ import {
   Home,
   LogOut,
   MessageCircle,
-  PersonStanding,
   PlusSquare,
   Search,
   TrendingUp,
 } from "lucide-react";
+import { IoPersonOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 const sidebarItems = [
-  {
-    icon: <Home />,
-    text: "Home",
-  },
-  {
-    icon: <Search />,
-    text: "Search",
-  },
-  {
-    icon: <TrendingUp />,
-    text: "Explore",
-  },
-  {
-    icon: <MessageCircle />,
-    text: "Messages",
-  },
-  {
-    icon: <Heart />,
-    text: "Notifications",
-  },
-  {
-    icon: <PlusSquare />,
-    text: "Create",
-  },
-  {
-    icon: <PersonStanding />,
-    text: "Profile",
-  },
-  {
-    icon: <LogOut />,
-    text: "Logout",
-  },
+  { icon: <Home />, text: "Home", path: "/" },
+  { icon: <Search />, text: "Search", path: "/search" },
+  { icon: <TrendingUp />, text: "Explore", path: "/explore" },
+  { icon: <MessageCircle />, text: "Messages", path: "/messages" },
+  { icon: <Heart />, text: "Notifications", path: "/notifications" },
+  { icon: <PlusSquare />, text: "Create", path: "/create" },
+  { icon: <IoPersonOutline size={'26px'} />, text: "Profile", path: "/profile" },
+  { icon: <LogOut />, text: "Logout", path: "/logout" },
 ];
 
 function LeftSidebar() {
@@ -58,24 +34,27 @@ function LeftSidebar() {
         alert(res.data.message);
       }
     } catch (error) {
-      alert(error.res.data.message);
+      alert(error.response?.data?.message || "Something went wrong");
     }
   };
 
-  const sidebarHandler = (textType) => {
-    if (textType == "Logout") {
+  const sidebarHandler = (item) => {
+    if (item.text === "Logout") {
       logoutHandler();
+    } else {
+      navigate(item.path);
     }
   };
+
   return (
-    <div className="fixeed top-0 z-10 left-0 px-4 border-r border-gray-300 w-[16%] h-screen">
+    <div className="fixed top-0 z-10 left-0 px-4 border-r border-gray-300 w-[16%] h-screen">
       <div className="flex flex-col">
-        <h1 className=" text-3xl my-5">SOCIAL MEDIA</h1>
+        <h1 className=" font-bold my-5 pl-3 text-3xl">SOCIAL MEDIA</h1>
         <div>
           {sidebarItems.map((item, index) => {
             return (
               <div
-                onClick={() => sidebarHandler(item.text)}
+                onClick={() => sidebarHandler(item)}
                 key={index}
                 className="flex items-center gap-4 relative hover:bg-gray-100 cursor-pointer rounder-lg p-3 my-3"
               >
