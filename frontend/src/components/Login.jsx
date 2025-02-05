@@ -2,8 +2,11 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { setAuthUser } from "../redux/authSlice";
 
 function Login() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [input, setInput] = useState({
     email: "",
@@ -23,37 +26,40 @@ function Login() {
         "http://localhost:8000/api/v1/user/login",
         input,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
-      if (res.data.success) {
-        alert("Login successful");
+  
+      if (res.data?.user) {
+        dispatch(setAuthUser(res.data.user)); // ✅ Dispatch only if user data exists
         navigate("/");
-        setInput({
-          email: "",
-          password: "",
-        });
+        setInput({ email: "", password: "" });
+      } else {
+        console.error("No user data found in response", res.data);
+        alert("Login failed: No user data received");
       }
     } catch (error) {
-      console.log(error);
+      console.error("Login Error:", error);
       alert(error.response?.data?.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form 
+      <form
         className="bg-white p-10 rounded shadow-md w-100"
         onSubmit={loginHandler} // Fixed function name
       >
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700" htmlFor="email">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="email"
+          >
             Email
           </label>
           <input
@@ -67,7 +73,10 @@ function Login() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="password"
+          >
             Password
           </label>
           <input

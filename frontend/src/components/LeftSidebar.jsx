@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { IoPersonOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { setAuthUser } from "../redux/authSlice";
+import { useDispatch } from "react-redux";
 
 const sidebarItems = [
   { icon: <Home />, text: "Home", path: "/" },
@@ -18,18 +20,24 @@ const sidebarItems = [
   { icon: <MessageCircle />, text: "Messages", path: "/messages" },
   { icon: <Heart />, text: "Notifications", path: "/notifications" },
   { icon: <PlusSquare />, text: "Create", path: "/create" },
-  { icon: <IoPersonOutline size={'26px'} />, text: "Profile", path: "/profile" },
+  {
+    icon: <IoPersonOutline size={"26px"} />,
+    text: "Profile",
+    path: "/profile",
+  },
   { icon: <LogOut />, text: "Logout", path: "/logout" },
 ];
 
 function LeftSidebar() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const logoutHandler = async () => {
     try {
       const res = await axios.get("http://localhost:8000/api/v1/user/logout", {
         withCredentials: true,
       });
       if (res.data.success) {
+        dispatch(setAuthUser(null));
         navigate("/login");
         alert(res.data.message);
       }

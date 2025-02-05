@@ -23,7 +23,7 @@ const Post = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar
-            size={"sm"}
+            size={"xs"}
             image={
               "https://static.vecteezy.com/system/resources/previews/020/911/740/non_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png"
             }
@@ -49,7 +49,7 @@ const Post = () => {
       <div className="flex justify-between items-center">
         <div className=" flex items-center gap-3">
           <FaRegHeart
-            size={"24px"}
+            size={"23px"}
             className="cursor-pointer hover:text-gray-600"
           />
           <MessageCircle onClick={()=>setOpen(true)} className="cursor-pointer hover:text-gray-600" />
