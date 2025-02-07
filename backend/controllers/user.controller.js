@@ -79,12 +79,20 @@ export const login = async (req, res) => {
     const populatedPosts = await Promise.all(
       user.posts.map(async (postId) => {
         const post = await Post.findById(postId);
-        if (post.author.equals(user._id)) {
+    
+        if (!post) {
+          return null; // Handle case where post does not exist
+        }
+    
+        // Ensure post.author is an ObjectId before calling `.equals()`
+        if (post.author && post.author.toString() === user._id.toString()) {
           return post;
         }
+    
         return null;
       })
     );
+    
     user = {
       _id: user._id,
       username: user.username,
@@ -142,7 +150,7 @@ export const getProfile = async (req, res) => {
 
 export const editProfile = async (req, res) => {
   try {
-    const userId = req.id;
+    const userId = req.user.id;
     const { bio, gender } = req.body;
     const profilePicture = req.file;
 
@@ -197,7 +205,7 @@ export const getuggestedUsers = async (req, res) => {
 
 export const followOrUnfollow = async (req, res) => {
   try {
-    const followKrneWala = req.id;
+    const followKrneWala = req.user.id;
     const jiskoFollowKrunga = req.params.id;
     if (followKrneWala == jiskoFollowKrunga) {
       return res.status(400).json({

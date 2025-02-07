@@ -7,11 +7,14 @@ import PostDialog from "./PostDialog";
 import { GoSmiley } from "react-icons/go";
 import EmojiPicker from "emoji-picker-react";
 
-const CommentDialog = ({ open, setOpen }) => {
+const CommentDialog = ({ open, setOpen, post }) => {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
+
+  // Extract first author safely
+  const author = Array.isArray(post.author) && post.author.length > 0 ? post.author[0] : null;
 
   // Close dialog when clicking outside
   useEffect(() => {
@@ -74,8 +77,8 @@ const CommentDialog = ({ open, setOpen }) => {
           {/* Left Side Image */}
           <div className="w-1/2">
             <img
-              className="w-full h-full object-cover rounded-l-lg aspect-square"
-              src="https://images.unsplash.com/photo-1738430275589-2cd3d0d0d57a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzMnx8fGVufDB8fHx8fA%3D%3D"
+              className="w-full h-full object-cover rounded-l-lg"
+              src={post.image}
               alt="Post-picture"
             />
           </div>
@@ -85,15 +88,12 @@ const CommentDialog = ({ open, setOpen }) => {
             {/* Header */}
             <div className="flex justify-between items-center p-4">
               <div className="flex gap-3 items-center">
-                <Link>
-                  <Avatar
-                    size="xs"
-                    image="https://static.vecteezy.com/system/resources/previews/020/911/740/non_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png"
-                  />
+                <Link to={`/profile/${author?.username}`}>
+                  <Avatar size="xs" image={author?.profilePicture} />
                 </Link>
                 <div>
-                  <Link className="font-semibold text-xs hover:underline">
-                    username
+                  <Link to={`/profile/${author?.username}`} className="font-semibold text-sm hover:underline">
+                    {author ? author.username : "Unknown"}
                   </Link>
                 </div>
               </div>
@@ -103,7 +103,19 @@ const CommentDialog = ({ open, setOpen }) => {
 
             {/* Comments Section */}
             <div className="flex-1 overflow-y-auto max-h-96 p-4 space-y-2">
-              <p className="text-center text-gray-500">No comments yet.</p>
+              {post.comments.length > 0 ? (
+                post.comments.map((comment, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <Avatar size="xs" image={comment.user.profilePicture} />
+                    <div>
+                      <p className="font-semibold text-sm">{comment.user.username}</p>
+                      <p className="text-gray-700">{comment.text}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">No comments yet.</p>
+              )}
             </div>
 
             {/* Comment Input */}

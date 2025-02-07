@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
+import Toast from "./Toast"; // Importing the Toast component
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -10,7 +11,8 @@ const Signup = () => {
     email: "",
     password: "",
   });
-  const [loading, setLoading] = useState(false); // Changed from null to false
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null); // State for toast message
 
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -18,7 +20,7 @@ const Signup = () => {
 
   const signupHandler = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true);
     try {
       const res = await axios.post(
         "http://localhost:8000/api/v1/user/register",
@@ -30,34 +32,37 @@ const Signup = () => {
           withCredentials: true,
         }
       );
+
       if (res.data.success) {
-        alert("Signup Success");
-        navigate("/login");
+        setToast({ message: "Signup Successful!", type: "success" });
+        setTimeout(() => {
+          navigate("/login");
+          setToast(null);
+        }, 3000); // Redirect after showing toast
         setInput({ username: "", email: "", password: "" });
       }
     } catch (error) {
-      alert(error.response.data.message);
+      setToast({
+        message: error.response?.data?.message || "Something went wrong!",
+        type: "error",
+      });
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      {toast && <Toast message={toast.message} type={toast.type} />} {/* Toast */}
       <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
-      <form
-        className="bg-white p-10 rounded shadow-md w-100"
-        onSubmit={signupHandler} // Moved onSubmit here
-      >
+      <form className="bg-white p-10 rounded shadow-md w-100" onSubmit={signupHandler}>
         <div className="mb-4">
-          <label
-            className="block text-sm font-medium text-gray-700"
-            htmlFor="username"
-          >
+          <label className="block text-sm font-medium text-gray-700" htmlFor="username">
             Username
           </label>
           <input
-            type="text" // Changed from "username" to "text"
+            type="text"
             name="username"
             value={input.username}
             onChange={changeEventHandler}
@@ -67,10 +72,7 @@ const Signup = () => {
           />
         </div>
         <div className="mb-4">
-          <label
-            className="block text-sm font-medium text-gray-700"
-            htmlFor="email"
-          >
+          <label className="block text-sm font-medium text-gray-700" htmlFor="email">
             Email
           </label>
           <input
@@ -84,10 +86,7 @@ const Signup = () => {
           />
         </div>
         <div className="mb-4">
-          <label
-            className="block text-sm font-medium text-gray-700"
-            htmlFor="password"
-          >
+          <label className="block text-sm font-medium text-gray-700" htmlFor="password">
             Password
           </label>
           <input
@@ -103,7 +102,7 @@ const Signup = () => {
         <button
           type="submit"
           className="w-full bg-black rounded-full text-white h-10 hover:cursor-pointer flex items-center justify-center"
-          disabled={loading} // Disable button when loading
+          disabled={loading}
         >
           {loading ? (
             <>

@@ -5,7 +5,7 @@ import { Message } from "../models/message.model.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const senderId = req.id;
+    const senderId = req.user.id;
     const receiverId = req.params.id;
     const { message } = req.body;
 
@@ -41,7 +41,7 @@ export const sendMessage = async (req, res) => {
 
 export const getMessage = async (req, res) => {
   try {
-    const senderId = req.id;
+    const senderId = req.user.id;
     const receiverId = req.params.id;
     const converstaion = await Converstation.find({
       participants: { $all: [senderId, receiverId] },

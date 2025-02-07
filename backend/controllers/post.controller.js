@@ -1,18 +1,22 @@
 import sharp from "sharp";
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
+import { Comment } from "../models/comment.model.js";
+import cloudinary from "../utlis/coludinary.js";
 
 export const addNewPost = async (req, res) => {
   try {
     const { caption } = req.body;
-    const image = req.file;
-    const authorId = req.id;
+    const image = req.file; // Make sure this exists
+    const authorId = req.user.id;
 
-    if (!image) {
-      return res.status(400).json({
-        message: "Image required",
-      });
+    if (!image || !image.buffer) {
+      return res
+        .status(400)
+        .json({ message: "Image required and must be valid" });
     }
+
+    // Optimize image using Sharp
     const optimizedImageBuffer = await sharp(image.buffer)
       .resize({
         width: 800,
@@ -22,21 +26,31 @@ export const addNewPost = async (req, res) => {
       .toFormat("jpeg", { quality: 80 })
       .toBuffer();
 
-    const fileUri = `data:image/jpeg; base64, ${
-      (optimizedImageBuffer, toString("base64"))
-    }`;
-    const cloudResponse = await cloudinary.uploader.upload(fileUri);
+    // Convert buffer to Base64 string
+    const fileUri = `data:image/jpeg;base64,${optimizedImageBuffer.toString(
+      "base64"
+    )}`;
+
+    // Upload to Cloudinary
+    const cloudResponse = await cloudinary.uploader.upload(fileUri, {
+      folder: "posts", // Optional: Store images in a specific folder
+    });
+
+    // Save post in the database
     const post = await Post.create({
       caption,
       image: cloudResponse.secure_url,
       author: authorId,
     });
+
+    // Add post to user's profile
     const user = await User.findById(authorId);
     if (user) {
       user.posts.push(post._id);
       await user.save();
     }
 
+    // Populate author details (excluding password)
     await post.populate({ path: "author", select: "-password" });
 
     return res.status(201).json({
@@ -45,7 +59,8 @@ export const addNewPost = async (req, res) => {
       post,
     });
   } catch (error) {
-    console.log(erroe);
+    console.error("Error in addNewPost:", error);
+    res.status(500).json({ message: "Internal Server Error", success: false });
   }
 };
 
@@ -53,7 +68,7 @@ export const getAllPost = async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate({ path: "author", select: "username, profilePicture" })
+      .populate({ path: "author", select: "username profilePicture" })
       .populate({
         path: "comments",
         sort: { createdAt: -1 },
@@ -73,7 +88,7 @@ export const getAllPost = async (req, res) => {
 
 export const getUserPost = async (req, res) => {
   try {
-    const authorId = req.id;
+    const authorId = req.user.id;
     const posts = await Post.find({ author: authorId })
       .sort({ createdAt: -1 })
       .populate({
@@ -99,7 +114,7 @@ export const getUserPost = async (req, res) => {
 
 export const likePost = async (req, res) => {
   try {
-    const likeKarnewalaUserId = req.is;
+    const likeKarnewalaUserId = req.user.id;
     const postId = req.params.id;
     const post = await Post.findById(postId);
     if (!post) {
@@ -120,7 +135,7 @@ export const likePost = async (req, res) => {
 
 export const dislikePost = async (req, res) => {
   try {
-    const likeKarnewalaUserId = req.is;
+    const likeKarnewalaUserId = req.user.id;
     const postId = req.params.id;
     const post = await Post.findById(postId);
     if (!post) {
@@ -142,7 +157,7 @@ export const dislikePost = async (req, res) => {
 export const addComment = async (req, res) => {
   try {
     const postId = req.params.id;
-    const commentkrnewaleUserId = req.id;
+    const commentkrnewaleUserId = req.user.id;
     const { text } = req.body;
     const post = await Post.findById(postId);
     if (text) {
@@ -193,45 +208,49 @@ export const getCommentsOfPost = async (req, res) => {
 export const deletePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const authorId = req.id;
+    const authorId = req.user.id; // ✅ Correct way to access user ID
+
     const post = await Post.findById(postId);
     if (!post) {
-      return req.status(404).json({
+      return res.status(404).json({
         message: "Post not found",
         success: false,
       });
     }
-    //user authicated
-    if (post.author.toString !== authorId) {
+
+    // Ensure the user is authorized
+    if (post.author.toString() !== authorId) {
       return res.status(403).json({
         message: "Unauthorized",
         success: false,
       });
     }
 
-    //delete post
+    // Delete the post
     await Post.findByIdAndDelete(postId);
 
-    //remove the post id from the user's post
-    let user = await User.findById(authorId);
-    user.posts = user.posts.filter((id) => id.toString() != postId);
-    user.save();
+    // Remove the post ID from the user's post list
+    const user = await User.findById(authorId);
+    user.posts = user.posts.filter((id) => id.toString() !== postId);
+    await user.save();
 
-    // delete associated comments
+    // Delete associated comments
     await Comment.deleteMany({ post: postId });
 
     return res
       .status(200)
       .json({ message: "Post deleted successfully", success: true });
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting post:", error);
+    return res.status(500).json({ message: "Server error", success: false });
   }
 };
+
 
 export const bookmarkPost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const authorId = req.id;
+    const authorId = req.user.id;
     const post = await Post.findById(postId);
     if (!post) {
       return res
@@ -243,13 +262,11 @@ export const bookmarkPost = async (req, res) => {
       // already bookmarked -> remove from the bookmark
       await user.updateOne({ $pull: { bookmarks: post._id } });
       await user.save();
-      return res
-        .status(200)
-        .json({
-          type: "unsaved",
-          message: "Post remove form bookmark",
-          success: true,
-        });
+      return res.status(200).json({
+        type: "unsaved",
+        message: "Post remove form bookmark",
+        success: true,
+      });
     } else {
       // bookmark post
       await user.updateOne({ $addToSet: { bookmarks: post._id } });

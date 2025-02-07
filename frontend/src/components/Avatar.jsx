@@ -2,7 +2,7 @@
 
 function Avatar({ size, image, altText = "User avatar" }) {
   const sizes = {
-    xs: "h-6 w-6",
+    xs: "h-8 w-8",
     sm: "h-10 w-10",
     md: "h-12 w-12",
     lg: "h-14 w-14",
