@@ -15,6 +15,7 @@ import { setAuthUser } from "../redux/authSlice";
 import { useDispatch } from "react-redux";
 import CreatePostDialog from "./CreatePostDialog";
 import Toast from "./Toast"; // Import Toast component
+import { setPosts } from "../redux/postSlice";
 
 const sidebarItems = [
   { icon: <Home />, text: "Home", path: "/" },
@@ -43,7 +44,8 @@ function LeftSidebar() {
         withCredentials: true,
       });
       if (res.data.success) {
-        dispatch(setAuthUser(null));
+        dispatch(setAuthUser(null), setPosts([]));
+
         setToast({ message: res.data.message, type: "success" }); // Show success toast
         setTimeout(() => navigate("/login"), 2000); // Redirect after 2s
       }

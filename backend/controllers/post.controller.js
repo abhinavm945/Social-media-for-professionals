@@ -73,8 +73,8 @@ export const getAllPost = async (req, res) => {
         path: "comments",
         sort: { createdAt: -1 },
         populate: {
-          path: "auther",
-          select: "username, profilePicture",
+          path: "author",
+          select: "username profilePicture",
         },
       });
     return res.status(200).json({
@@ -93,14 +93,14 @@ export const getUserPost = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "author",
-        select: "username, profilePicture",
+        select: "username profilePicture",
       })
       .populate({
         path: "comments",
         sort: { createdAt: -1 },
         populate: {
-          path: "auther",
-          select: "username, profilePicture",
+          path: "author",
+          select: "username profilePicture",
         },
       });
     return res.status(200).json({
@@ -148,7 +148,7 @@ export const dislikePost = async (req, res) => {
     await post.save();
 
     // implement socket io for real time notifications
-    return res.status(200).json({ message: "Post disliked", success: true });
+    return res.status(200).json({ message: "Comment added", success: true });
   } catch (error) {
     console.log(error);
   }
@@ -159,12 +159,19 @@ export const addComment = async (req, res) => {
     const postId = req.params.id;
     const commentkrnewaleUserId = req.user.id;
     const { text } = req.body;
-    const post = await Post.findById(postId);
-    if (text) {
+
+    if (!text || text.trim() === "") {
       return res.status(400).json({
         message: "text is required",
         success: false,
       });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ message: "Post not found", success: false });
     }
 
     const comment = await Comment.create({
@@ -175,13 +182,20 @@ export const addComment = async (req, res) => {
 
     await comment.populate({
       path: "author",
-      select: "username, profilePicture",
+      select: "username profilePicture",
     });
+
     post.comments.push(comment._id);
     await post.save();
-    return res.status(200).json({ message: "comment added", success: true });
+
+    return res
+      .status(200)
+      .json({ message: "Comment added", success: true, comment });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -190,7 +204,7 @@ export const getCommentsOfPost = async (req, res) => {
     const postId = req.params.id;
     const comments = await Comment.find({ post: postId }).populate(
       "author",
-      "username, profilePicture"
+      "username profilePicture"
     );
     if (!comments) {
       return req
@@ -245,7 +259,6 @@ export const deletePost = async (req, res) => {
     return res.status(500).json({ message: "Server error", success: false });
   }
 };
-
 
 export const bookmarkPost = async (req, res) => {
   try {

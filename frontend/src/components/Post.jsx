@@ -16,6 +16,7 @@ const Post = ({ post }) => {
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
   const [postLike, setPostLike] = useState(post.likes.length);
+  const [comment, setComment] = useState(post.comments);
   const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
 
   const changeEventHandler = (e) => {
@@ -58,6 +59,46 @@ const Post = ({ post }) => {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const commentHandler = async () => {
+    if (!text.trim()) {
+      alert("Comment cannot be empty");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `http://localhost:8000/api/v1/post/${post._id}/comment`,
+        { text },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (res.data.success && res.data.comment) {
+        const newComment = res.data.comment;
+
+        // Update local state and global state
+        const updatedComments = [newComment, ...comment];
+        setComment(updatedComments);
+
+        const updatedPosts = posts.map((p) =>
+          p._id === post._id ? { ...p, comments: updatedComments } : p
+        );
+
+        dispatch(setPosts(updatedPosts));
+        setText(""); // Clear input field
+      } else {
+        alert("Failed to post comment");
+      }
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      alert("An error occurred while posting the comment. Please try again.");
     }
   };
 
@@ -144,7 +185,14 @@ const Post = ({ post }) => {
           onChange={changeEventHandler}
           className="outline-none text-sm w-full"
         />
-        {text && <span className="text-[#3badf8]">Post</span>}
+        {text && (
+          <span
+            onClick={commentHandler}
+            className="text-[#3badf8] cursor-pointer"
+          >
+            Post
+          </span>
+        )}
       </div>
     </div>
   );
