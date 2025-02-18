@@ -14,7 +14,6 @@ const Toast = ({ message, type = "success", duration = 3000 }) => {
   }, [duration]);
 
   if (!visible) return null; // Hide toast when time expires
-  console.log("toast is working");
 
   return (
     <div

@@ -3,6 +3,7 @@ import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Home from "./components/Home";
 import MainLayout from "./components/MainLayout";
+import Profile from "./components/Profile";
 
 const browserRouter = createBrowserRouter([
   {
@@ -12,6 +13,10 @@ const browserRouter = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/profile/:id",
+        element: <Profile />,
       },
     ],
   },

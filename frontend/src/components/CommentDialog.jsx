@@ -13,7 +13,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
   const [text, setText] = useState("");
   const dispatch = useDispatch();
   const { posts } = useSelector((store) => store.post);
-  const [comment, setComment] = useState(post.comments || []);
+  const [comment, setComment] = useState(post?.comments || []);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -58,6 +58,12 @@ const CommentDialog = ({ open, setOpen, post }) => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
+
+  useEffect(() => {
+    if (post) {
+      setComment(post?.comments);
+    }
+  }, [post]);
 
   if (!open) return null; // Prevent rendering when closed
 
@@ -143,7 +149,12 @@ const CommentDialog = ({ open, setOpen, post }) => {
                   </Link>
                 </div>
               </div>
-              <PostDialog />
+              <PostDialog
+                username={author ? author.username : "Unknown"}
+                isFollowing={true}
+                post={post}
+                onFollowToggle={(status) => console.log(status)}
+              />
             </div>
             <hr />
 

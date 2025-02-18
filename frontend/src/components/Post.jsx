@@ -109,13 +109,13 @@ const Post = ({ post }) => {
         <div className="flex items-center gap-2">
           {author && (
             <>
-              <Avatar size={"xs"} image={author.profilePicture} />
-              <h1 className=" font-medium">{author.username}</h1>
+              <Avatar size={"xs"} image={author?.profilePicture} />
+              <h1 className=" font-medium">{author?.username}</h1>
             </>
           )}
         </div>
         <PostDialog
-          username={author ? author.username : "Unknown"}
+          username={author ? author?.username : "Unknown"}
           isFollowing={true}
           post={post}
           onFollowToggle={(status) => console.log(status)}
@@ -168,12 +168,15 @@ const Post = ({ post }) => {
       </p>
 
       {/* Comments Section */}
-      <span
-        onClick={() => setOpen(true)}
-        className="cursor-pointer text-sm text-gray-600"
-      >
-        View all {post.comments?.length || 0} comments
-      </span>
+      {comment.length > 0 && (
+        <span
+          onClick={() => setOpen(true)}
+          className="cursor-pointer text-sm text-gray-600"
+        >
+          View all {post.comments?.length || 0} comments
+        </span>
+      )}
+
       <CommentDialog open={open} setOpen={setOpen} post={post} />
 
       {/* Add Comment */}

@@ -3,7 +3,7 @@ import {
   editProfile,
   followOrUnfollow,
   getProfile,
-  getuggestedUsers,
+  getSuggestedUsers,
   login,
   logout,
   register,
@@ -20,7 +20,7 @@ router.route("/:id/profile").get(isAuthenticated, getProfile);
 router
   .route("/profile/edit")
   .post(isAuthenticated, upload.single("profilePicture"), editProfile);
-router.route("/suggested").get(isAuthenticated, getuggestedUsers);
+router.route("/suggested").get(isAuthenticated, getSuggestedUsers);
 router.route("/followorunfollow/:id").post(isAuthenticated, followOrUnfollow);
 
 export default router;
