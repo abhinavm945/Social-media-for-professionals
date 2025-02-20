@@ -7,27 +7,29 @@ const RightSidebar = () => {
   const { user } = useSelector((store) => store.auth);
 
   return (
-    <div className="w-fit my-10 pr-28">
-      <div className="flex items-center gap-2">
-        {user && (
-          <>
-            <Link to={`/profile/${user?._id}`}>
-              <Avatar size={"xs"} image={user?.profilePicture} />
-            </Link>
-            <div className="items-center">
-              <Link to={`/profile/${user?._id}`}>
-                <h1 className="font-medium">{user?.username}</h1>
-              </Link>
-              <span className="text-gray-600 text-sm">
-                {user?.bio || "No Bio..."}
+    <div className="w-72 my-10 pr-8">
+      {/* User Profile Section */}
+      {user && (
+        <div className="flex justify-between items-center mb-6">
+          <Link
+            to={`/profile/${user?._id}`}
+            className="flex items-center gap-3"
+          >
+            <Avatar size="sm" image={user?.profilePicture} />
+            <div className="flex flex-col">
+              <h1 className="font-semibold text-sm">{user?.username}</h1>
+              <span className="text-gray-500 text-xs">
+                {user?.bio || "No bio available"}
               </span>
             </div>
-          </>
-        )}
-        <Link to="/login" className="text-blue-500 items-center gap-4 px-5">
-          Switch
-        </Link>
-      </div>
+          </Link>
+          <Link to="/login" className="text-blue-500 text-sm font-semibold">
+            Switch
+          </Link>
+        </div>
+      )}
+
+      {/* Suggested Users Section */}
       <SuggestedUsers />
     </div>
   );

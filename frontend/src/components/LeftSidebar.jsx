@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CreatePostDialog from "./CreatePostDialog";
 import Toast from "./Toast"; // Import Toast component
-import { setAuthUser } from "../redux/authSlice";
+import { setAuthUser, setUserProfile } from "../redux/authSlice";
 import { setPosts } from "../redux/postSlice";
 import Avatar from "./Avatar"; // Import Avatar component
 
@@ -33,6 +33,7 @@ function LeftSidebar() {
       if (res.data.success) {
         dispatch(setAuthUser(null));
         dispatch(setPosts([]));
+        dispatch(setUserProfile(null));
 
         setToast({ message: res.data.message, type: "success" }); // Show success toast
         setTimeout(() => navigate("/login"), 2000); // Redirect after 2s
@@ -67,7 +68,7 @@ function LeftSidebar() {
       icon: user?.profilePicture ? (
         <Avatar size="xs" image={user.profilePicture} />
       ) : (
-        <IoPersonOutline />
+        <IoPersonOutline size={24} />
       ),
       path: `/profile/${user?._id}`,
     },

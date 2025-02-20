@@ -1,36 +1,38 @@
 /* eslint-disable react/prop-types */
 import { Bookmark, MessageCircle, Send } from "lucide-react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
 import Avatar from "./Avatar";
 import PostDialog from "./PostDialog";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
 import CommentDialog from "./CommentDialog";
-import { useState } from "react";
-import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "../redux/postSlice.js";
+import { toast } from "react-toastify"; // ✅ Better error handling
 
 const Post = ({ post }) => {
-  const [text, setText] = useState("");
-  const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
-  const [postLike, setPostLike] = useState(post.likes.length);
-  const [comment, setComment] = useState(post.comments);
-  const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
 
-  const changeEventHandler = (e) => {
-    const inputText = e.target.value;
-    setText(inputText.trim() ? inputText : "");
-  };
-
-  // ✅ Fix: Ensure we extract the first author properly
+  // Extract author properly
   const author =
     Array.isArray(post.author) && post.author.length > 0
       ? post.author[0]
       : null;
 
+  // States
+  const [text, setText] = useState("");
+  const [open, setOpen] = useState(false);
+  const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
+
+  const changeEventHandler = (e) => {
+    setText(e.target.value.trim());
+  };
+
   const LikeOrDisLikeHandler = async () => {
+    if (!user) return toast.error("You need to be logged in to like posts.");
+
     try {
       const action = liked ? "dislike" : "like";
       const res = await axios.post(
@@ -41,64 +43,52 @@ const Post = ({ post }) => {
 
       if (res.data.success) {
         setLiked(!liked);
-        setPostLike((prevLikes) => (liked ? prevLikes - 1 : prevLikes + 1));
 
-        // ✅ Correctly updating the post state in Redux
-        const updatedPostData = posts.map((p) =>
+        // Update Redux store instead of using useState for likes
+        const updatedPosts = posts.map((p) =>
           p._id === post._id
             ? {
-                ...p, // Keep all other properties of the post
+                ...p,
                 likes: liked
                   ? p.likes.filter((id) => id !== user._id)
                   : [...p.likes, user._id],
               }
             : p
         );
-
-        dispatch(setPosts(updatedPostData));
+        dispatch(setPosts(updatedPosts));
       }
     } catch (error) {
-      console.log(error);
+      toast.error("Failed to update like status. Try again.");
     }
   };
 
   const commentHandler = async () => {
-    if (!text.trim()) {
-      alert("Comment cannot be empty");
-      return;
-    }
+    if (!text.trim()) return toast.warning("Comment cannot be empty.");
+    if (!user) return toast.error("You must be logged in to comment.");
 
     try {
       const res = await axios.post(
         `http://localhost:8000/api/v1/post/${post._id}/comment`,
         { text },
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
 
       if (res.data.success && res.data.comment) {
-        const newComment = res.data.comment;
-
-        // Update local state and global state
-        const updatedComments = [newComment, ...comment];
-        setComment(updatedComments);
-
         const updatedPosts = posts.map((p) =>
-          p._id === post._id ? { ...p, comments: updatedComments } : p
+          p._id === post._id
+            ? { ...p, comments: [res.data.comment, ...p.comments] }
+            : p
         );
-
         dispatch(setPosts(updatedPosts));
         setText(""); // Clear input field
       } else {
-        alert("Failed to post comment");
+        toast.error("Failed to post comment.");
       }
     } catch (error) {
-      console.error("Error posting comment:", error);
-      alert("An error occurred while posting the comment. Please try again.");
+      toast.error("An error occurred while posting the comment.");
     }
   };
 
@@ -109,30 +99,30 @@ const Post = ({ post }) => {
         <div className="flex items-center gap-2">
           {author && (
             <>
-              <Avatar size={"xs"} image={author?.profilePicture} />
-              <h1 className=" font-medium">{author?.username}</h1>
+              <Avatar size={"xs"} image={author.profilePicture} />
+              <h1 className="font-medium">{author.username}</h1>
             </>
           )}
         </div>
         <PostDialog
-          username={author ? author?.username : "Unknown"}
+          username={author ? author.username : "Unknown"}
           isFollowing={true}
           post={post}
-          onFollowToggle={(status) => console.log(status)}
         />
       </div>
 
       {/* Post Image */}
-      <img
-        className="rounded-sm my-2 aspect-square object-cover"
-        src={post.image}
-        alt="Post-picture"
-      />
+      {post.image && (
+        <img
+          className="rounded-sm my-2 aspect-square object-cover"
+          src={post.image}
+          alt="Post"
+        />
+      )}
 
       {/* Post Actions */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          {/* ✅ Fixed Like Button */}
           {liked ? (
             <FaHeart
               size={"23px"}
@@ -157,23 +147,23 @@ const Post = ({ post }) => {
       </div>
 
       {/* Likes Count */}
-      <span className="font-medium block my-2">{postLike} likes</span>
+      <span className="font-medium block my-2">{post.likes.length} likes</span>
 
       {/* Post Caption */}
       <p>
         <span className="font-medium mr-2">
-          {author ? author.username : "Unknown"}
+          {author?.username || "Unknown"}
         </span>
         {post.caption}
       </p>
 
       {/* Comments Section */}
-      {comment.length > 0 && (
+      {post.comments.length > 0 && (
         <span
           onClick={() => setOpen(true)}
           className="cursor-pointer text-sm text-gray-600"
         >
-          View all {post.comments?.length || 0} comments
+          View all {post.comments.length} comments
         </span>
       )}
 

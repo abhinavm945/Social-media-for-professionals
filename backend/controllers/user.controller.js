@@ -79,20 +79,20 @@ export const login = async (req, res) => {
     const populatedPosts = await Promise.all(
       user.posts.map(async (postId) => {
         const post = await Post.findById(postId);
-    
+
         if (!post) {
           return null; // Handle case where post does not exist
         }
-    
+
         // Ensure post.author is an ObjectId before calling `.equals()`
         if (post.author && post.author.toString() === user._id.toString()) {
           return post;
         }
-    
+
         return null;
       })
     );
-    
+
     user = {
       _id: user._id,
       username: user.username,
@@ -138,7 +138,9 @@ export const logout = async (__dirname, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userId = req.params.id;
-    let user = await User.findById(userId).select("-password");
+    let user = await User.findById(userId)
+      .populate({ path: "posts", createdAt: -1 })
+      .populate("bookmarks").select('-password');
     return res.status(200).json({
       user,
       success: true,
@@ -158,7 +160,7 @@ export const editProfile = async (req, res) => {
 
     if (profilePicture) {
       const fileUri = getDataUri(profilePicture);
-      await cloudinary.uploader.upload(fileUri);
+      cloudResponse= await cloudinary.uploader.upload(fileUri);
     }
 
     const user = await User.findById(userId).select("-password");
@@ -170,7 +172,7 @@ export const editProfile = async (req, res) => {
     }
     if (bio) user.bio = bio;
     if (gender) user.gender = gender;
-    if (profilePicture) user.profilePicture = cloudResponse.secure_url;
+    if (profilePicture) user.profilePicture = cloudResponse?.secure_url;
 
     await user.save();
 
@@ -192,9 +194,9 @@ export const getSuggestedUsers = async (req, res) => {
 
     const loggedInUserId = req.user._id; // Correctly get the logged-in user's ID
 
-    const suggestedUsers = await User.find({ _id: { $ne: loggedInUserId } }).select(
-      "-password"
-    );
+    const suggestedUsers = await User.find({
+      _id: { $ne: loggedInUserId },
+    }).select("-password");
 
     if (!suggestedUsers || suggestedUsers.length === 0) {
       return res.status(200).json({
@@ -213,7 +215,6 @@ export const getSuggestedUsers = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const followOrUnfollow = async (req, res) => {
   try {
