@@ -38,7 +38,7 @@ const Signup = () => {
         setTimeout(() => {
           navigate("/login");
           setToast(null);
-        }, 3000); // Redirect after showing toast
+        }, 2000); // Redirect after showing toast
         setInput({ username: "", email: "", password: "" });
       }
     } catch (error) {

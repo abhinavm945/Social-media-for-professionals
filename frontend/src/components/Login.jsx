@@ -38,7 +38,7 @@ function Login() {
         // ✅ Delay navigation so user sees the toast
         setTimeout(() => {
           navigate("/");
-        }, 2000);
+        }, 1000);
 
         setInput({ email: "", password: "" });
       } else {

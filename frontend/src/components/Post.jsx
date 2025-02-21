@@ -8,12 +8,14 @@ import Avatar from "./Avatar";
 import PostDialog from "./PostDialog";
 import CommentDialog from "./CommentDialog";
 import { setPosts } from "../redux/postSlice.js";
-import { toast } from "react-toastify"; // ✅ Better error handling
+import { toast } from "react-toastify";
+import { setUserProfile } from "../redux/authSlice.js";
 
 const Post = ({ post }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
+  const { userProfile } = useSelector((store) => store.auth); // Get userProfile from Redux
 
   // Extract author properly
   const author =
@@ -44,7 +46,7 @@ const Post = ({ post }) => {
       if (res.data.success) {
         setLiked(!liked);
 
-        // Update Redux store instead of using useState for likes
+        // Update Redux store for posts
         const updatedPosts = posts.map((p) =>
           p._id === post._id
             ? {
@@ -56,9 +58,28 @@ const Post = ({ post }) => {
             : p
         );
         dispatch(setPosts(updatedPosts));
+
+        // Update Redux store for userProfile if the post belongs to the user
+        if (userProfile && userProfile._id === post.author[0]?._id) {
+          const updatedUserPosts = {
+            ...userProfile,
+            posts: userProfile.posts.map((p) =>
+              p._id === post._id
+                ? {
+                    ...p,
+                    likes: liked
+                      ? p.likes.filter((id) => id !== user._id)
+                      : [...p.likes, user._id],
+                  }
+                : p
+            ),
+          };
+          dispatch(setUserProfile(updatedUserPosts));
+        }
       }
     } catch (error) {
       toast.error("Failed to update like status. Try again.");
+      console.log(error);
     }
   };
 
@@ -77,18 +98,34 @@ const Post = ({ post }) => {
       );
 
       if (res.data.success && res.data.comment) {
+        // Update Redux store for posts
         const updatedPosts = posts.map((p) =>
           p._id === post._id
             ? { ...p, comments: [res.data.comment, ...p.comments] }
             : p
         );
         dispatch(setPosts(updatedPosts));
+
+        // Update Redux store for userProfile if the post belongs to the user
+        if (userProfile && userProfile._id === post.author[0]?._id) {
+          const updatedUserPosts = {
+            ...userProfile,
+            posts: userProfile.posts.map((p) =>
+              p._id === post._id
+                ? { ...p, comments: [res.data.comment, ...p.comments] }
+                : p
+            ),
+          };
+          dispatch(setUserProfile(updatedUserPosts));
+        }
+
         setText(""); // Clear input field
       } else {
         toast.error("Failed to post comment.");
       }
     } catch (error) {
       toast.error("An error occurred while posting the comment.");
+      console.log(error);
     }
   };
 
@@ -167,7 +204,12 @@ const Post = ({ post }) => {
         </span>
       )}
 
-      <CommentDialog open={open} setOpen={setOpen} post={post} />
+      <CommentDialog
+        open={open}
+        setOpen={setOpen}
+        post={post}
+        comments={post.comments} // Pass comments explicitly
+      />
 
       {/* Add Comment */}
       <div className="flex items-center justify-between">

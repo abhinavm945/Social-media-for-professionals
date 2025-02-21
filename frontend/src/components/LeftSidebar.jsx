@@ -31,12 +31,16 @@ function LeftSidebar() {
         withCredentials: true,
       });
       if (res.data.success) {
-        dispatch(setAuthUser(null));
-        dispatch(setPosts([]));
-        dispatch(setUserProfile(null));
-
         setToast({ message: res.data.message, type: "success" }); // Show success toast
-        setTimeout(() => navigate("/login"), 2000); // Redirect after 2s
+        setTimeout(
+          () => [
+            dispatch(setAuthUser(null)),
+            dispatch(setUserProfile(null)),
+            dispatch(setPosts([])),
+            navigate("/login"),
+          ],
+          1000
+        ); // Redirect after 2s
       }
     } catch (error) {
       setToast({

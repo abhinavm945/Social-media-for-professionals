@@ -22,9 +22,6 @@ function Profile() {
   const { posts } = useSelector((store) => store.post);
   const dispatch = useDispatch();
 
-  const [postLike, setPostLike] = useState(0);
-  const [liked, setLiked] = useState(false);
-
   const isLoggedInUserProfile = user?._id === userProfile?._id;
   const isFollowing = userProfile?.followers.includes(user?._id);
 
@@ -35,7 +32,10 @@ function Profile() {
   // Like or Dislike Handler
   const LikeOrDisLikeHandler = async (postId) => {
     try {
-      const action = liked ? "dislike" : "like";
+      const post = posts.find((p) => p._id === postId);
+      const isLiked = post.likes.includes(user._id);
+      const action = isLiked ? "dislike" : "like";
+
       const res = await axios.post(
         `http://localhost:8000/api/v1/post/${postId}/${action}`,
         {},
@@ -43,14 +43,11 @@ function Profile() {
       );
 
       if (res.data.success) {
-        setLiked(!liked);
-        setPostLike((prevLikes) => (liked ? prevLikes - 1 : prevLikes + 1));
-
         const updatedPosts = posts.map((p) =>
           p._id === postId
             ? {
                 ...p,
-                likes: liked
+                likes: isLiked
                   ? p.likes.filter((id) => id !== user._id)
                   : [...p.likes, user._id],
               }
@@ -64,47 +61,12 @@ function Profile() {
     }
   };
 
-  // Comment Handler
-  const commentHandler = async (postId, text) => {
-    if (!text.trim()) {
-      alert("Comment cannot be empty");
-      return;
-    }
-
-    try {
-      const res = await axios.post(
-        `http://localhost:8000/api/v1/post/${postId}/comment`,
-        { text },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success && res.data.comment) {
-        const newComment = res.data.comment;
-        const updatedPosts = posts.map((p) =>
-          p._id === postId ? { ...p, comments: [newComment, ...p.comments] } : p
-        );
-
-        dispatch(setPosts(updatedPosts));
-      } else {
-        alert("Failed to post comment");
-      }
-    } catch (error) {
-      console.error("Error posting comment:", error);
-      alert("An error occurred while posting the comment. Please try again.");
-    }
-  };
-
   // Determine displayed posts based on active tab
   const displayedPosts =
     activeTab === "posts"
-      ? userProfile?.posts
+      ? userProfile?.posts || []
       : activeTab === "saved"
-      ? userProfile?.bookmarks
+      ? userProfile?.bookmarks || []
       : [];
 
   return (
@@ -211,7 +173,7 @@ function Profile() {
           {/* Display Posts for "Recent Content" as full posts */}
           {activeTab === "recent-content" ? (
             <div className="flex flex-col gap-4">
-              {userProfile?.posts.length > 0 ? (
+              {userProfile?.posts?.length > 0 ? (
                 userProfile.posts.map((post) => (
                   <Post key={post._id} post={post} />
                 ))
@@ -242,7 +204,7 @@ function Profile() {
                           className="flex items-center gap-2 hover:text-gray-300"
                         >
                           <span>{post?.likes.length}</span>
-                          {liked ? (
+                          {post.likes.includes(user._id) ? (
                             <FaHeart size={22} className="text-red-500" />
                           ) : (
                             <FaRegHeart size={22} />

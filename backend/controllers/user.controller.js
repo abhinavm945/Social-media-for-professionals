@@ -138,15 +138,39 @@ export const logout = async (__dirname, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userId = req.params.id;
-    let user = await User.findById(userId)
-      .populate({ path: "posts", createdAt: -1 })
-      .populate("bookmarks").select('-password');
+
+    // Find the user and populate the posts along with their comments
+    const user = await User.findById(userId)
+      .populate({
+        path: "posts",
+        populate: [
+          {
+            path: "author",
+            select: "username profilePicture",
+          },
+          {
+            path: "comments",
+            options: { sort: { createdAt: -1 } }, // Sort comments by latest
+            populate: {
+              path: "author",
+              select: "username profilePicture",
+            },
+          },
+        ],
+        options: { sort: { createdAt: -1 } }, // Sort posts by latest
+      })
+      .populate("bookmarks")
+      .select("-password");
+
     return res.status(200).json({
       user,
       success: true,
     });
   } catch (error) {
     console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", success: false });
   }
 };
 
@@ -160,7 +184,7 @@ export const editProfile = async (req, res) => {
 
     if (profilePicture) {
       const fileUri = getDataUri(profilePicture);
-      cloudResponse= await cloudinary.uploader.upload(fileUri);
+      cloudResponse = await cloudinary.uploader.upload(fileUri);
     }
 
     const user = await User.findById(userId).select("-password");
