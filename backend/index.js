@@ -6,10 +6,10 @@ import connectDB from "./utlis/db.js";
 import userRoute from "./routes/user.route.js";
 import postRoute from "./routes/post.route.js";
 import messageRoute from "./routes/message.route.js";
+import { app, server } from "./socket/socket.js";
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Middleware
@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 });
 
 // Start server
-app.listen(PORT, async () => {
+server.listen(PORT, async () => {
   await connectDB();
   console.log(`Server is running on ${PORT}`);
 });

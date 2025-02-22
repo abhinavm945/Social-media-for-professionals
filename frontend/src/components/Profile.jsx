@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+
 import { Link, useParams } from "react-router-dom";
 import useGetUserProfile from "../hooks/useGetUserProfile";
 import { useSelector, useDispatch } from "react-redux";
@@ -68,6 +68,15 @@ function Profile() {
       : activeTab === "saved"
       ? userProfile?.bookmarks || []
       : [];
+
+  // Loading state
+  if (!userProfile) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex max-w-7xl justify-center mr-5 mx-auto pl-10">

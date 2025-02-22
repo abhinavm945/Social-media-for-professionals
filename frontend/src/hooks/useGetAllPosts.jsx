@@ -19,7 +19,7 @@ const useGetAllPosts = () => {
       }
     };
     fetchAllPost();
-  }, []);
+  }, [dispatch]);
 };
 
 export default useGetAllPosts;

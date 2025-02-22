@@ -13,7 +13,9 @@ function Home() {
         <Feed />
         <Outlet />
       </div>
-      <RightSidebar />
+      <div className="hidden lg:block w-72 ml-auto mr-5">
+        <RightSidebar />
+      </div>
     </div>
   );
 }

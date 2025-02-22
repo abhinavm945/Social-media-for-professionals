@@ -11,11 +11,14 @@ const SuggestedUsers = () => {
         <h1 className="font-semibold text-gray-600">Suggestions for you</h1>
         <span className="font-medium cursor-pointer">See All</span>
       </div>
-      {suggestedUsers
-        .filter((suggestedUser) => suggestedUser._id !== user?._id) // Exclude logged-in user
-        .map((suggestedUser) => {
-          return (
-            <div key={suggestedUser._id} className="flex justify-between items-center my-2">
+      {suggestedUsers && suggestedUsers.length > 0 ? (
+        suggestedUsers
+          .filter((suggestedUser) => suggestedUser._id !== user?._id)
+          .map((suggestedUser) => (
+            <div
+              key={suggestedUser._id}
+              className="flex justify-between items-center my-2"
+            >
               <div className="flex items-center gap-2">
                 <Link to={`/profile/${suggestedUser._id}`}>
                   <Avatar size={"xs"} image={suggestedUser?.profilePicture} />
@@ -33,8 +36,10 @@ const SuggestedUsers = () => {
                 Follow
               </span>
             </div>
-          );
-        })}
+          ))
+      ) : (
+        <p className="text-gray-500">No suggestions available.</p>
+      )}
     </div>
   );
 };

@@ -212,16 +212,23 @@ export const editProfile = async (req, res) => {
 
 export const getSuggestedUsers = async (req, res) => {
   try {
+    // Check if user is authenticated
     if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized" 
+      });
     }
 
-    const loggedInUserId = req.user._id; // Correctly get the logged-in user's ID
+    // Get logged-in user's ID from req.user.id
+    const loggedInUserId = req.user.id; // Use req.user.id (not req.user._id)
 
+    // Fetch suggested users (excluding the logged-in user)
     const suggestedUsers = await User.find({
-      _id: { $ne: loggedInUserId },
-    }).select("-password");
+      _id: { $ne: loggedInUserId }, // Exclude the logged-in user
+    }).select("-password"); // Exclude the password field
 
+    // Handle empty results
     if (!suggestedUsers || suggestedUsers.length === 0) {
       return res.status(200).json({
         success: true,
@@ -230,13 +237,19 @@ export const getSuggestedUsers = async (req, res) => {
       });
     }
 
+    // Return suggested users
     return res.status(200).json({
       success: true,
       users: suggestedUsers,
+      message: "Suggested users fetched successfully",
     });
   } catch (error) {
     console.error("Error fetching suggested users:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ 
+      success: false,
+      message: "Server error",
+      error: error.message, // Include the error message for debugging
+    });
   }
 };
 

@@ -6,7 +6,7 @@ function Avatar({ size, image, altText = "User avatar" }) {
     xs: "h-8 w-8",
     sm: "h-10 w-10",
     md: "h-12 w-12",
-    lg: "h-14 w-14",
+    lg: "h-20 w-20",
     xl: "h-40 w-40",
   };
 
