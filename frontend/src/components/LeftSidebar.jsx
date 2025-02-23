@@ -21,7 +21,7 @@ import {
 } from "../redux/authSlice";
 import { setPosts } from "../redux/postSlice";
 import Avatar from "./Avatar"; // Import Avatar component
-import { setSelectedUser } from "../redux/chatSlice";
+import { setMessages, setSelectedUser } from "../redux/chatSlice";
 
 function LeftSidebar() {
   const [open, setOpen] = useState(false);
@@ -43,6 +43,7 @@ function LeftSidebar() {
             dispatch(setUserProfile(null)),
             dispatch(setSelectedUser(null)),
             dispatch(setSuggestedUsers([])),
+            dispatch(setMessages([])),
             dispatch(setPosts([])),
             navigate("/login"),
           ],

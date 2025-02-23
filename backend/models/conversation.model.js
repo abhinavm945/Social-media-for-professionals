@@ -20,7 +20,7 @@ const conversationSchema = new mongoose.Schema(
   }
 );
 
-export const Converstation = mongoose.model(
-  "Converstation",
+export const Conversation = mongoose.model(
+  "Conversation",
   conversationSchema
 );
