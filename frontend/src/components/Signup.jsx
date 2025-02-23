@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import Toast from "./Toast"; // Importing the Toast component
+import { useSelector } from "react-redux";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Signup = () => {
   });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null); // State for toast message
+  const { user } = useSelector((store) => store.auth);
 
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -51,14 +53,25 @@ const Signup = () => {
       setTimeout(() => setToast(null), 3000);
     }
   };
-
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  });
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      {toast && <Toast message={toast.message} type={toast.type} />} {/* Toast */}
+      {toast && <Toast message={toast.message} type={toast.type} />}{" "}
+      {/* Toast */}
       <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
-      <form className="bg-white p-10 rounded shadow-md w-100" onSubmit={signupHandler}>
+      <form
+        className="bg-white p-10 rounded shadow-md w-100"
+        onSubmit={signupHandler}
+      >
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700" htmlFor="username">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="username"
+          >
             Username
           </label>
           <input
@@ -72,7 +85,10 @@ const Signup = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700" htmlFor="email">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="email"
+          >
             Email
           </label>
           <input
@@ -86,7 +102,10 @@ const Signup = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="password"
+          >
             Password
           </label>
           <input

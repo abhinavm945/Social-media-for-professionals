@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
-import { Bookmark, MessageCircle, Send } from "lucide-react";
+import { Bookmark, BookmarkCheck, MessageCircle, Send } from "lucide-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import Avatar from "./Avatar";
@@ -15,9 +15,8 @@ const Post = ({ post }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
-  const { userProfile } = useSelector((store) => store.auth); // Get userProfile from Redux
+  const { userProfile } = useSelector((store) => store.auth);
 
-  // Extract author properly
   const author =
     Array.isArray(post.author) && post.author.length > 0
       ? post.author[0]
@@ -27,6 +26,22 @@ const Post = ({ post }) => {
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
+  const [loading, setLoading] = useState(true); // 🔄 Add loading state
+  const [isBookmark, setIsBookmark] = useState(
+    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) || false
+  );
+
+  console.log(userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id));
+  
+
+  useEffect(() => {
+    // Simulate fetching delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000); // Adjust delay as needed
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const changeEventHandler = (e) => {
     setText(e.target.value.trim());
@@ -46,7 +61,6 @@ const Post = ({ post }) => {
       if (res.data.success) {
         setLiked(!liked);
 
-        // Update Redux store for posts
         const updatedPosts = posts.map((p) =>
           p._id === post._id
             ? {
@@ -59,7 +73,6 @@ const Post = ({ post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        // Update Redux store for userProfile if the post belongs to the user
         if (userProfile && userProfile._id === post.author[0]?._id) {
           const updatedUserPosts = {
             ...userProfile,
@@ -98,7 +111,6 @@ const Post = ({ post }) => {
       );
 
       if (res.data.success && res.data.comment) {
-        // Update Redux store for posts
         const updatedPosts = posts.map((p) =>
           p._id === post._id
             ? { ...p, comments: [res.data.comment, ...p.comments] }
@@ -106,7 +118,6 @@ const Post = ({ post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        // Update Redux store for userProfile if the post belongs to the user
         if (userProfile && userProfile._id === post.author[0]?._id) {
           const updatedUserPosts = {
             ...userProfile,
@@ -119,7 +130,7 @@ const Post = ({ post }) => {
           dispatch(setUserProfile(updatedUserPosts));
         }
 
-        setText(""); // Clear input field
+        setText("");
       } else {
         toast.error("Failed to post comment.");
       }
@@ -129,106 +140,142 @@ const Post = ({ post }) => {
     }
   };
 
+  const bookmarkHandler = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/v1/post/${post?._id}/bookmark`,
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setIsBookmark(res.data.type !== "unsaved");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="my-8 w-full max-w-sm mx-auto">
-      {/* Post Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {author && (
-            <>
-              <Avatar size={"xs"} image={author.profilePicture} />
-              <h1 className="font-medium">{author.username}</h1>
-            </>
-          )}
+      {loading ? (
+        // 🔄 Loader (Replace with a better spinner if needed)
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
         </div>
-        <PostDialog
-          username={author ? author.username : "Unknown"}
-          isFollowing={true}
-          post={post}
-        />
-      </div>
-
-      {/* Post Image */}
-      {post.image && (
-        <img
-          className="rounded-sm my-2 aspect-square object-cover"
-          src={post.image}
-          alt="Post"
-        />
-      )}
-
-      {/* Post Actions */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          {liked ? (
-            <FaHeart
-              size={"23px"}
-              className="cursor-pointer text-red-600 hover:text-gray-600"
-              onClick={LikeOrDisLikeHandler}
+      ) : (
+        <>
+          {/* Post Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {author && (
+                <>
+                  <Avatar size={"xs"} image={author.profilePicture} />
+                  <h1 className="font-medium">{author.username}</h1>
+                </>
+              )}
+            </div>
+            <PostDialog
+              username={author ? author.username : "Unknown"}
+              isFollowing={true}
+              post={post}
             />
-          ) : (
-            <FaRegHeart
-              size={"23px"}
-              className="cursor-pointer hover:text-gray-600"
-              onClick={LikeOrDisLikeHandler}
+          </div>
+
+          {/* Post Image */}
+          {post.image && (
+            <img
+              className="rounded-sm my-2 aspect-square object-cover"
+              src={post.image}
+              alt="Post"
             />
           )}
 
-          <MessageCircle
-            onClick={() => setOpen(true)}
-            className="cursor-pointer hover:text-gray-600"
-          />
-          <Send className="cursor-pointer hover:text-gray-600" />
-        </div>
-        <Bookmark className="cursor-pointer hover:text-gray-600" />
-      </div>
+          {/* Post Actions */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              {liked ? (
+                <FaHeart
+                  size={"23px"}
+                  className="cursor-pointer text-red-600 hover:text-gray-600"
+                  onClick={LikeOrDisLikeHandler}
+                />
+              ) : (
+                <FaRegHeart
+                  size={"23px"}
+                  className="cursor-pointer hover:text-gray-600"
+                  onClick={LikeOrDisLikeHandler}
+                />
+              )}
 
-      {/* Likes Count */}
-      <span className="font-medium block my-2">{post.likes.length} likes</span>
+              <MessageCircle
+                onClick={() => setOpen(true)}
+                className="cursor-pointer hover:text-gray-600"
+              />
+              <Send className="cursor-pointer hover:text-gray-600" />
+            </div>
+            {isBookmark ? (
+              <BookmarkCheck
+                onClick={bookmarkHandler}
+                className="cursor-pointer hover:text-gray-600"
+              />
+            ) : (
+              <Bookmark
+                onClick={bookmarkHandler}
+                className="cursor-pointer hover:text-gray-600"
+              />
+            )}
+          </div>
 
-      {/* Post Caption */}
-      <p>
-        <span className="font-medium mr-2">
-          {author?.username || "Unknown"}
-        </span>
-        {post.caption}
-      </p>
-
-      {/* Comments Section */}
-      {post.comments.length > 0 && (
-        <span
-          onClick={() => setOpen(true)}
-          className="cursor-pointer text-sm text-gray-600"
-        >
-          View all {post.comments.length} comments
-        </span>
-      )}
-
-      <CommentDialog
-        open={open}
-        setOpen={setOpen}
-        post={post}
-        comments={post.comments} // Pass comments explicitly
-      />
-
-      {/* Add Comment */}
-      <div className="flex items-center justify-between">
-        <input
-          type="text"
-          placeholder="Add a comment..."
-          value={text}
-          onChange={changeEventHandler}
-          className="outline-none text-sm w-full"
-        />
-        {text && (
-          <span
-            onClick={commentHandler}
-            className="text-[#3badf8] cursor-pointer"
-          >
-            Post
+          {/* Likes Count */}
+          <span className="font-medium block my-2">
+            {post.likes.length} likes
           </span>
-        )}
-      </div>
+
+          {/* Post Caption */}
+          <p>
+            <span className="font-medium mr-2">
+              {author?.username || "Unknown"}
+            </span>
+            {post.caption}
+          </p>
+
+          {/* Comments Section */}
+          {post.comments.length > 0 && (
+            <span
+              onClick={() => setOpen(true)}
+              className="cursor-pointer text-sm text-gray-600"
+            >
+              View all {post.comments.length} comments
+            </span>
+          )}
+
+          <CommentDialog
+            open={open}
+            setOpen={setOpen}
+            post={post}
+            comments={post.comments}
+          />
+
+          {/* Add Comment */}
+          <div className="flex items-center justify-between">
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              value={text}
+              onChange={changeEventHandler}
+              className="outline-none text-sm w-full"
+            />
+            {text && (
+              <span
+                onClick={commentHandler}
+                className="text-[#3badf8] cursor-pointer"
+              >
+                Post
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

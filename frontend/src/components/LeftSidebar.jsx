@@ -29,6 +29,9 @@ function LeftSidebar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
+  const { likeNotification } = useSelector(
+    (store) => store.realTimeNotification
+  );
 
   const logoutHandler = async () => {
     try {
@@ -48,7 +51,7 @@ function LeftSidebar() {
             navigate("/login"),
           ],
           1000
-        ); // Redirect after 2s
+        ); // Redirect after 1s
       }
     } catch (error) {
       setToast({
@@ -98,10 +101,17 @@ function LeftSidebar() {
               <div
                 onClick={() => sidebarHandler(item)}
                 key={index}
-                className="flex items-center gap-4 hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3"
+                className="relative flex items-center gap-4 hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3"
               >
                 {item.icon}
                 <span>{item.text}</span>
+                
+                {/* 🔥 Notification Badge for Unread Likes 🔥 */}
+                {item.text === "Notifications" && likeNotification.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full absolute left-5 top-1">
+                    {likeNotification.length}
+                  </span>
+                )}
               </div>
             ))}
           </div>

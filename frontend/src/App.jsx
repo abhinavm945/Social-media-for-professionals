@@ -11,27 +11,59 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { setSocket } from "./redux/socketSlice";
 import { setOnlineUser } from "./redux/chatSlice";
+import { setLikeNotification } from "./redux/rtnSlice";
+import NotificationsPage from "./components/NotificationsPage";
+import ProtectedRoutes from "./components/ProtectedRoutes";
 
 const browserRouter = createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout />,
+    element: (
+      <ProtectedRoutes>
+        <MainLayout />
+      </ProtectedRoutes>
+    ),
     children: [
       {
         index: true,
-        element: <Home />,
+        element: (
+          <ProtectedRoutes>
+            {" "}
+            <Home />
+          </ProtectedRoutes>
+        ),
       },
       {
         path: "/profile/:id",
-        element: <Profile />,
+        element: (
+          <ProtectedRoutes>
+            <Profile />
+          </ProtectedRoutes>
+        ),
       },
       {
         path: "/account/edit",
-        element: <EditProfile />,
+        element: (
+          <ProtectedRoutes>
+            <EditProfile />
+          </ProtectedRoutes>
+        ),
       },
       {
         path: "/chat",
-        element: <ChatPage />,
+        element: (
+          <ProtectedRoutes>
+            <ChatPage />
+          </ProtectedRoutes>
+        ),
+      },
+      {
+        path: "/notifications",
+        element: (
+          <ProtectedRoutes>
+            <NotificationsPage />
+          </ProtectedRoutes>
+        ),
       },
     ],
   },
@@ -61,6 +93,10 @@ function App() {
 
       socketio.on("getOnlineUsers", (onlineUsers) => {
         dispatch(setOnlineUser(onlineUsers));
+      });
+
+      socketio.on("notification", (notification) => {
+        dispatch(setLikeNotification(notification));
       });
 
       return () => {

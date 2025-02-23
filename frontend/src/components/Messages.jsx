@@ -4,8 +4,10 @@ import Avatar from "./Avatar";
 import { useSelector } from "react-redux";
 import useGetAllMessage from "../hooks/useGetAllMessage";
 import { useRef, useState, useEffect } from "react";
+import useGetRTM from "../hooks/useGetRTM";
 
 const Messages = ({ selectedUser }) => {
+  useGetRTM();
   const { loading } = useGetAllMessage();
   const { messages, isTyping } = useSelector((store) => store.chat);
   const messagesEndRef = useRef(null);
