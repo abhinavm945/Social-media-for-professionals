@@ -1,4 +1,3 @@
-
 import { Link, useParams } from "react-router-dom";
 import useGetUserProfile from "../hooks/useGetUserProfile";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,9 +10,11 @@ import RightSidebar from "./RightSidebar";
 import { setPosts } from "../redux/postSlice";
 import axios from "axios";
 import Post from "./Post";
+import CommentDialog from "./CommentDialog";
 
 function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
+  const [selectedPost, setSelectedPost] = useState(null);
   const params = useParams();
   const userId = params.id;
   useGetUserProfile(userId);
@@ -27,6 +28,15 @@ function Profile() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+  };
+
+  const handleOpenDialog = (post) => {
+    setSelectedPost(post); // Store the clicked post data
+  };
+
+  // Close the comment dialog
+  const handleCloseDialog = () => {
+    setSelectedPost(null); // Reset the selected post when closing
   };
 
   // Like or Dislike Handler
@@ -198,6 +208,7 @@ function Profile() {
               {displayedPosts?.length > 0 ? (
                 displayedPosts.map((post) => (
                   <div
+                    onDoubleClick={() => handleOpenDialog(post)}
                     key={post?._id}
                     className="relative group cursor-pointer"
                   >
@@ -210,7 +221,7 @@ function Profile() {
                       <div className="flex items-center text-white space-x-4">
                         <button
                           onClick={() => LikeOrDisLikeHandler(post._id)}
-                          className="flex items-center gap-2 hover:text-gray-300"
+                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
                         >
                           <span>{post?.likes.length}</span>
                           {post.likes.includes(user._id) ? (
@@ -219,7 +230,10 @@ function Profile() {
                             <FaRegHeart size={22} />
                           )}
                         </button>
-                        <button className="flex items-center gap-2 hover:text-gray-300">
+                        <button
+                          onClick={() => handleOpenDialog(post)}
+                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
+                        >
                           <span>{post?.comments.length}</span>
                           <MessageCircle />
                         </button>
@@ -236,6 +250,14 @@ function Profile() {
           )}
         </div>
       </div>
+      {selectedPost && (
+        <CommentDialog
+          open={!!selectedPost} // Open only if a post is selected
+          setOpen={handleCloseDialog} // Close dialog
+          post={selectedPost} // Pass selected post
+          comments={selectedPost?.comments || []} // Ensure comments array exists
+        />
+      )}
 
       {/* Right Sidebar - Fixed at Extreme Right */}
       <div className="hidden lg:block w-72 ml-auto">

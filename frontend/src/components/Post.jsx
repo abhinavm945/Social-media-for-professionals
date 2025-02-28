@@ -30,8 +30,6 @@ const Post = ({ post }) => {
   const [isBookmark, setIsBookmark] = useState(
     userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) || false
   );
-
-  console.log(userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id));
   
 
   useEffect(() => {
