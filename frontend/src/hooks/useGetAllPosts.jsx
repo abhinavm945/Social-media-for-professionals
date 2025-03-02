@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setPosts } from "../redux/postSlice";
+import { setblogs, setPosts } from "../redux/postSlice";
 
 const useGetAllPosts = () => {
   const dispatch = useDispatch();
@@ -19,6 +19,21 @@ const useGetAllPosts = () => {
       }
     };
     fetchAllPost();
+  }, [dispatch]);
+  useEffect(() => {
+    const fetchAllblogs = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/api/v1/blog/all", {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          dispatch(setblogs(res.data.blogs));
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAllblogs();
   }, [dispatch]);
 };
 

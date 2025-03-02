@@ -49,6 +49,12 @@ export const addNewPost = async (req, res) => {
     const user = await User.findById(authorId);
     if (user) {
       user.posts.push(post._id);
+
+      // Clean up invalid bookmarkPosts (if any)
+      user.bookmarkPosts = user.bookmarkPosts.filter(
+        (bookmark) => bookmark.type && bookmark.refId
+      );
+
       await user.save();
     }
 
@@ -306,9 +312,9 @@ export const bookmarkPost = async (req, res) => {
         .json({ message: "Post not found", success: false });
     }
     const user = await User.findById(authorId);
-    if (user.bookmarks.includes(post._id)) {
+    if (user.bookmarkPosts.includes(post._id)) {
       // already bookmarked -> remove from the bookmark
-      await user.updateOne({ $pull: { bookmarks: post._id } });
+      await user.updateOne({ $pull: { bookmarkPosts: post._id } });
       await user.save();
       return res.status(200).json({
         type: "unsaved",
@@ -317,7 +323,7 @@ export const bookmarkPost = async (req, res) => {
       });
     } else {
       // bookmark post
-      await user.updateOne({ $addToSet: { bookmarks: post._id } });
+      await user.updateOne({ $addToSet: { bookmarkPosts: post._id } });
       await user.save();
       return res
         .status(200)

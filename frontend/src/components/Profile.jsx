@@ -11,6 +11,9 @@ import { setPosts } from "../redux/postSlice";
 import axios from "axios";
 import Post from "./Post";
 import CommentDialog from "./CommentDialog";
+import Blog from "./Blog"; // Import the Blog component
+import { toast } from "react-toastify"; // For showing notifications
+import { setUserProfile } from "../redux/authSlice";
 
 function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
@@ -71,13 +74,49 @@ function Profile() {
     }
   };
 
+  // Follow or Unfollow Handler
+  const handleFollowOrUnfollow = async () => {
+    try {
+      const res = await axios.post(
+        `http://localhost:8000/api/v1/user/followorunfollow/${userProfile?._id}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        // Update the user profile in the Redux store
+        toast.success(res.data.message);
+
+        // Determine if the user is now following or unfollowing
+        const isFollowing = userProfile?.followers.includes(user._id);
+
+        // Create an updated user profile object
+        const updatedUserProfile = {
+          ...userProfile,
+          followers: isFollowing
+            ? userProfile.followers.filter((id) => id !== user._id) // Remove the user from followers
+            : [...userProfile.followers, user._id], // Add the user to followers
+        };
+
+        // Update the user profile in the Redux store
+        dispatch(setUserProfile(updatedUserProfile));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+      console.error(error);
+    }
+  };
+
   // Determine displayed posts based on active tab
   const displayedPosts =
     activeTab === "posts"
       ? userProfile?.posts || []
       : activeTab === "saved"
-      ? userProfile?.bookmarks || []
+      ? userProfile?.bookmarkPosts || []
       : [];
+
+  // Determine displayed blogs based on active tab
+  const displayedBlogs = activeTab === "blogs" ? userProfile?.blogs || [] : [];
 
   // Loading state
   if (!userProfile) {
@@ -102,20 +141,20 @@ function Profile() {
           {/* Profile Details */}
           <section className="w-full text-center md:text-left">
             <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                <span className="text-2xl font-semibold">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 cursor-pointer ">
+                <span className="text-2xl font-semibold ">
                   {userProfile?.username}
                 </span>
 
                 {/* Profile Action Buttons */}
                 {isLoggedInUserProfile ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ">
                     <Link to="/account/edit">
-                      <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4">
+                      <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4 cursor-pointer">
                         Edit profile
                       </button>
                     </Link>
-                    <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4">
+                    <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4 cursor-pointer">
                       View Archive
                     </button>
                     <MdSettings
@@ -125,15 +164,21 @@ function Profile() {
                   </div>
                 ) : isFollowing ? (
                   <div className="flex items-center gap-2">
-                    <button className="bg-gray-200 hover:bg-gray-300 text-red-500 py-2 px-4 rounded-md text-sm">
+                    <button
+                      onClick={handleFollowOrUnfollow}
+                      className="bg-gray-200 hover:bg-gray-300 text-red-500 py-2 px-4 rounded-md text-sm cursor-pointer"
+                    >
                       Unfollow
                     </button>
-                    <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4">
+                    <button className="hover:bg-gray-300 h-8 rounded-md bg-gray-200 px-4 cursor-pointer">
                       Message
                     </button>
                   </div>
                 ) : (
-                  <button className="bg-[#179cf5] hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-md text-sm">
+                  <button
+                    onClick={handleFollowOrUnfollow}
+                    className="bg-[#179cf5] hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-md text-sm cursor-pointer"
+                  >
                     Follow
                   </button>
                 )}
@@ -141,19 +186,25 @@ function Profile() {
 
               {/* Follower Stats */}
               <div className="flex justify-center md:justify-start gap-6 text-center md:text-left">
+              <p>
+                  <span className="font-semibold">
+                    {userProfile?.blogs.length}
+                  </span>{" "}
+                  Blogs
+                </p>
                 <p>
                   <span className="font-semibold">
                     {userProfile?.posts.length}
                   </span>{" "}
                   Posts
                 </p>
-                <p>
-                  <span className="font-semibold">
+                <p className="cursor-pointer">
+                  <span className="font-semibold ">
                     {userProfile?.followers.length}
                   </span>{" "}
                   Followers
                 </p>
-                <p>
+                <p className="cursor-pointer">
                   <span className="font-semibold">
                     {userProfile?.following.length}
                   </span>{" "}
@@ -202,8 +253,17 @@ function Profile() {
                 </p>
               )}
             </div>
-          ) : (
-            /* Grid layout for other tabs like "posts", "saved" */
+          ) : activeTab === "blogs" ? ( // Render blogs when "blogs" tab is active
+            <div className="flex flex-col gap-4">
+              {displayedBlogs?.length > 0 ? (
+                displayedBlogs.map((blog) => (
+                  <Blog key={blog._id} blog={blog} />
+                ))
+              ) : (
+                <p className="text-center text-gray-500">No blogs available.</p>
+              )}
+            </div>
+          ) : activeTab === "posts" ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
               {displayedPosts?.length > 0 ? (
                 displayedPosts.map((post) => (
@@ -213,18 +273,18 @@ function Profile() {
                     className="relative group cursor-pointer"
                   >
                     <img
-                      src={post.image}
+                      src={post?.image}
                       alt="postimage"
                       className="rounded-md w-full aspect-square object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="flex items-center text-white space-x-4">
                         <button
-                          onClick={() => LikeOrDisLikeHandler(post._id)}
+                          onClick={() => LikeOrDisLikeHandler(post?._id)}
                           className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
                         >
-                          <span>{post?.likes.length}</span>
-                          {post.likes.includes(user._id) ? (
+                          <span>{post?.likes?.length}</span>
+                          {post?.likes?.includes(user._id) ? (
                             <FaHeart size={22} className="text-red-500" />
                           ) : (
                             <FaRegHeart size={22} />
@@ -234,7 +294,7 @@ function Profile() {
                           onClick={() => handleOpenDialog(post)}
                           className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
                         >
-                          <span>{post?.comments.length}</span>
+                          <span>{post?.comments?.length}</span>
                           <MessageCircle />
                         </button>
                       </div>
@@ -247,7 +307,51 @@ function Profile() {
                 </p>
               )}
             </div>
-          )}
+          ) : activeTab === "saved" ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              {displayedPosts?.length > 0 ? (
+                displayedPosts.map((post) => (
+                  <div
+                    onDoubleClick={() => handleOpenDialog(post)}
+                    key={post?._id}
+                    className="relative group cursor-pointer"
+                  >
+                    <img
+                      src={post?.image}
+                      alt="postimage"
+                      className="rounded-md w-full aspect-square object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex items-center text-white space-x-4">
+                        <button
+                          onClick={() => LikeOrDisLikeHandler(post?._id)}
+                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
+                        >
+                          <span>{post?.likes?.length}</span>
+                          {post?.likes?.includes(user._id) ? (
+                            <FaHeart size={22} className="text-red-500" />
+                          ) : (
+                            <FaRegHeart size={22} />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleOpenDialog(post)}
+                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
+                        >
+                          <span>{post?.comments?.length}</span>
+                          <MessageCircle />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500 col-span-3">
+                  No saved posts available.
+                </p>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
       {selectedPost && (

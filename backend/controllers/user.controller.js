@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import getDataUri from "../utlis/datauri.js";
 import cloudinary from "../utlis/coludinary.js";
 import { Post } from "../models/post.model.js";
+import { Blog } from "../models/blog.model.js";
 
 export const register = async (req, res) => {
   try {
@@ -93,6 +94,23 @@ export const login = async (req, res) => {
       })
     );
 
+    const populatedBlogs = await Promise.all(
+      user.blogs.map(async (blogId) => {
+        const blog = await Blog.findById(blogId);
+
+        if (!blog) {
+          return null; // Handle case where post does not exist
+        }
+
+        // Ensure blog.author is an ObjectId before calling `.equals()`
+        if (blog.author && blog.author.toString() === user._id.toString()) {
+          return blog;
+        }
+
+        return null;
+      })
+    );
+
     user = {
       _id: user._id,
       username: user.username,
@@ -102,6 +120,7 @@ export const login = async (req, res) => {
       followers: user.followers,
       following: user.following,
       posts: populatedPosts,
+      blogs: populatedBlogs,
     };
 
     return res
@@ -159,7 +178,26 @@ export const getProfile = async (req, res) => {
         ],
         options: { sort: { createdAt: -1 } }, // Sort posts by latest
       })
-      .populate("bookmarks")
+      .populate({
+        path: "blogs",
+        populate: [
+          {
+            path: "author",
+            select: "username profilePicture",
+          },
+          {
+            path: "comments",
+            options: { sort: { createdAt: -1 } }, // Sort comments by latest
+            populate: {
+              path: "author",
+              select: "username profilePicture",
+            },
+          },
+        ],
+        options: { sort: { createdAt: -1 } }, // Sort posts by latest
+      })
+      .populate("bookmarkPosts")
+      .populate("bookmarkBlogs")
       .select("-password");
 
     return res.status(200).json({
@@ -214,9 +252,9 @@ export const getSuggestedUsers = async (req, res) => {
   try {
     // Check if user is authenticated
     if (!req.user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Unauthorized" 
+        message: "Unauthorized",
       });
     }
 
@@ -245,7 +283,7 @@ export const getSuggestedUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching suggested users:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       message: "Server error",
       error: error.message, // Include the error message for debugging
@@ -255,57 +293,76 @@ export const getSuggestedUsers = async (req, res) => {
 
 export const followOrUnfollow = async (req, res) => {
   try {
-    const followKrneWala = req.user.id;
-    const jiskoFollowKrunga = req.params.id;
-    if (followKrneWala == jiskoFollowKrunga) {
+    const followKrneWala = req.user.id; // Logged-in user (follower)
+    const jiskoFollowKrunga = req.params.id; // User to follow/unfollow (target user)
+
+    // Check if the user is trying to follow/unfollow themselves
+    if (followKrneWala === jiskoFollowKrunga) {
       return res.status(400).json({
-        message: "You cannot Folloe/Unfollow Yourself",
+        message: "You cannot follow/unfollow yourself",
         success: false,
       });
     }
+
+    // Find the logged-in user and the target user
     const user = await User.findById(followKrneWala);
     const targetUser = await User.findById(jiskoFollowKrunga);
 
+    // Check if both users exist
     if (!user || !targetUser) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "User not found",
         success: false,
       });
     }
 
+    // Check if the logged-in user is already following the target user
     const isFollowing = user.following.includes(jiskoFollowKrunga);
+
     if (isFollowing) {
-      //unfollow logic
+      // Unfollow logic
       await Promise.all([
+        // Remove the target user from the logged-in user's `following` list
         User.updateOne(
           { _id: followKrneWala },
           { $pull: { following: jiskoFollowKrunga } }
         ),
+        // Remove the logged-in user from the target user's `followers` list
         User.updateOne(
           { _id: jiskoFollowKrunga },
-          { $pull: { following: followKrneWala } }
+          { $pull: { followers: followKrneWala } }
         ),
       ]);
-      return res
-        .status(200)
-        .json({ message: "Unfollowed successfully", success: true });
+
+      return res.status(200).json({
+        message: "Unfollowed successfully",
+        success: true,
+      });
     } else {
-      //follow logic
+      // Follow logic
       await Promise.all([
+        // Add the target user to the logged-in user's `following` list
         User.updateOne(
           { _id: followKrneWala },
           { $push: { following: jiskoFollowKrunga } }
         ),
+        // Add the logged-in user to the target user's `followers` list
         User.updateOne(
           { _id: jiskoFollowKrunga },
-          { $push: { following: followKrneWala } }
+          { $push: { followers: followKrneWala } }
         ),
       ]);
-      return res
-        .status(200)
-        .json({ message: "Followed successfully", success: true });
+
+      return res.status(200).json({
+        message: "Followed successfully",
+        success: true,
+      });
     }
   } catch (error) {
-    console.log(error);
+    console.error("Error in followOrUnfollow:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+    });
   }
 };

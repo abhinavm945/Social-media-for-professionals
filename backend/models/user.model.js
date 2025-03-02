@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema(
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
-    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
+    blogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }],
+    bookmarkPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
+    bookmarkBlogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }],
   },
   { timestamps: true }
 );

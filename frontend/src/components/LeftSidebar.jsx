@@ -13,19 +13,22 @@ import { IoPersonOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CreatePostDialog from "./CreatePostDialog";
-import Toast from "./Toast"; // Import Toast component
+import CreateBlogDialog from "./CreateBlogDialog";
+import Toast from "./Toast";
 import {
   setAuthUser,
   setSuggestedUsers,
   setUserProfile,
 } from "../redux/authSlice";
 import { setPosts } from "../redux/postSlice";
-import Avatar from "./Avatar"; // Import Avatar component
+import Avatar from "./Avatar";
 import { setMessages, setSelectedUser } from "../redux/chatSlice";
 
 function LeftSidebar() {
   const [open, setOpen] = useState(false);
-  const [toast, setToast] = useState({ message: "", type: "success" }); // State for toast message
+  const [openCreate, setOpenCreate] = useState(false);
+  const [createBlog, setCreateBlog] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success" });
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
@@ -39,7 +42,7 @@ function LeftSidebar() {
         withCredentials: true,
       });
       if (res.data.success) {
-        setToast({ message: res.data.message, type: "success" }); // Show success toast
+        setToast({ message: res.data.message, type: "success" });
         setTimeout(
           () => [
             dispatch(setAuthUser(null)),
@@ -51,13 +54,13 @@ function LeftSidebar() {
             navigate("/login"),
           ],
           1000
-        ); // Redirect after 1s
+        );
       }
     } catch (error) {
       setToast({
         message: error.response?.data?.message || "Something went wrong",
         type: "error",
-      }); // Show error toast
+      });
     }
   };
 
@@ -65,7 +68,7 @@ function LeftSidebar() {
     if (item.text === "Logout") {
       logoutHandler();
     } else if (item.text === "Create") {
-      setOpen(true);
+      setOpenCreate(!openCreate); // Toggle the dropdown
     } else {
       navigate(item.path);
     }
@@ -98,25 +101,53 @@ function LeftSidebar() {
           <h1 className="font-bold my-5 pl-3 text-3xl">SOCIAL MEDIA</h1>
           <div>
             {sidebarItems.map((item, index) => (
-              <div
-                onClick={() => sidebarHandler(item)}
-                key={index}
-                className="relative flex items-center gap-4 hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3"
-              >
-                {item.icon}
-                <span>{item.text}</span>
-                
-                {/* 🔥 Notification Badge for Unread Likes 🔥 */}
-                {item.text === "Notifications" && likeNotification.length > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full absolute left-5 top-1">
-                    {likeNotification.length}
-                  </span>
+              <div key={index}>
+                <div
+                  onClick={() => sidebarHandler(item)}
+                  className="relative flex items-center gap-4 hover:bg-gray-100 cursor-pointer rounded-lg p-3 my-3"
+                >
+                  {item.icon}
+                  <span>{item.text}</span>
+
+                  {item.text === "Notifications" &&
+                    likeNotification.length > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full absolute left-5 top-1">
+                        {likeNotification.length}
+                      </span>
+                    )}
+                </div>
+
+                {/* Dropdown for Create */}
+                {item.text === "Create" && openCreate && (
+                  <div >
+                    <button
+                      onClick={() => {
+                        setOpen(true);
+                        setOpenCreate(false); // Close the dropdown after clicking
+                      }}
+                      className="w-full text-center p-3 hover:bg-gray-100"
+                    >
+                      Create Post
+                    </button>
+                    <hr className="border-gray-300" />
+                    <button
+                      onClick={() => {
+                        setCreateBlog(true);
+                        setOpenCreate(false); // Close the dropdown after clicking
+                      }}
+                      className="w-full text-center p-3 hover:bg-gray-100 "
+                    >
+                      Create Blog
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         </div>
+
         <CreatePostDialog open={open} setOpen={setOpen} />
+        <CreateBlogDialog createBlog={createBlog} setCreateBlog={setCreateBlog} />
       </div>
     </>
   );

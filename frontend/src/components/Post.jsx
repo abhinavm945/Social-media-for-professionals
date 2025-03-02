@@ -12,15 +12,15 @@ import { toast } from "react-toastify";
 import { setUserProfile } from "../redux/authSlice.js";
 
 const Post = ({ post }) => {
+  console.log("post data",post);
+  
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
   const { userProfile } = useSelector((store) => store.auth);
 
-  const author =
-    Array.isArray(post.author) && post.author.length > 0
-      ? post.author[0]
-      : null;
+  const author =post?.author;
+  
 
   // States
   const [text, setText] = useState("");
@@ -154,7 +154,7 @@ const Post = ({ post }) => {
   };
 
   return (
-    <div className="my-8 w-full max-w-sm mx-auto">
+    <div className="w-full max-w-md mx-auto  p-6 mb-6">
       {loading ? (
         // 🔄 Loader (Replace with a better spinner if needed)
         <div className="flex justify-center items-center h-screen">

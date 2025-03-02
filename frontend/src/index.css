@@ -16,3 +16,24 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #959595;
 }
+
+
+.blog-content ul {
+  padding-left: 3rem;
+}
+
+.blog-content ol {
+  padding-left: 2rem;
+}
+
+.blog-content ol {
+  list-style-type: decimal;
+}
+
+.blog-content ul {
+  list-style-type: disc;
+}
+
+.blog-content li {
+  margin: 0.2rem 0;
+}
