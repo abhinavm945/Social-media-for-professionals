@@ -10,7 +10,7 @@ const NotificationsPage = () => {
   );
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg h-[90%]">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <ArrowLeft

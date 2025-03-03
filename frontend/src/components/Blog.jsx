@@ -11,9 +11,9 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Avatar from "./Avatar";
+import BlogDialog from "./BlogDialog";
 
 const Blog = ({ blog }) => {
-  console.log("Blog Data:", blog); // Add this line to debug
   const { user } = useSelector((store) => store.auth);
   const [liked, setLiked] = useState(blog?.likes?.includes(user?._id) || false); // Add optional chaining
   const [isBookmarked, setIsBookmarked] = useState(
@@ -61,7 +61,7 @@ const Blog = ({ blog }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 mb-6">
+    <div className="max-w-xl mx-auto p-6 mb-6 ">
       {/* Blog Author */}
       <div className="flex items-center gap-3 mb-4">
         <Avatar size="sm" image={author?.profilePicture} />
@@ -69,6 +69,7 @@ const Blog = ({ blog }) => {
           <h1 className="font-semibold text-sm">{author?.username}</h1>
           <span className="text-xs text-gray-500">{author?.bio}</span>
         </div>
+        <BlogDialog blog={blog} />
       </div>
 
       {/* Blog Title */}

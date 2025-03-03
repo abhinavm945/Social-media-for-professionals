@@ -19,10 +19,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
   const emojiPickerRef = useRef(null);
 
   // Extract author safely
-  const author =
-    Array.isArray(post.author) && post.author.length > 0
-      ? post.author[0]
-      : null;
+  const author = post?.author;
 
   // Close dialog when clicking outside
   useEffect(() => {

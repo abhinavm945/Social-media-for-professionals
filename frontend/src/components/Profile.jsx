@@ -13,7 +13,7 @@ import Post from "./Post";
 import CommentDialog from "./CommentDialog";
 import Blog from "./Blog"; // Import the Blog component
 import { toast } from "react-toastify"; // For showing notifications
-import { setUserProfile } from "../redux/authSlice";
+import { setSuggestedUsers, setUserProfile } from "../redux/authSlice";
 
 function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
@@ -22,7 +22,9 @@ function Profile() {
   const userId = params.id;
   useGetUserProfile(userId);
 
-  const { userProfile, user } = useSelector((store) => store.auth);
+  const { userProfile, user, suggestedUsers } = useSelector(
+    (store) => store.auth
+  );
   const { posts } = useSelector((store) => store.post);
   const dispatch = useDispatch();
 
@@ -82,30 +84,44 @@ function Profile() {
         {},
         { withCredentials: true }
       );
-
+  
       if (res.data.success) {
-        // Update the user profile in the Redux store
         toast.success(res.data.message);
-
-        // Determine if the user is now following or unfollowing
+  
         const isFollowing = userProfile?.followers.includes(user._id);
-
-        // Create an updated user profile object
+  
+        // Update only the specific user's followers list
         const updatedUserProfile = {
           ...userProfile,
           followers: isFollowing
-            ? userProfile.followers.filter((id) => id !== user._id) // Remove the user from followers
-            : [...userProfile.followers, user._id], // Add the user to followers
+            ? userProfile.followers.filter((id) => id !== user._id)
+            : [...userProfile.followers, user._id],
         };
-
-        // Update the user profile in the Redux store
+  
+        // Update the user profile in Redux
         dispatch(setUserProfile(updatedUserProfile));
+  
+        // Update only the followed/unfollowed suggested user
+        const updatedSuggestedUsers = suggestedUsers.map((suggestedUser) =>
+          suggestedUser._id === userProfile._id
+            ? {
+                ...suggestedUser,
+                followers: isFollowing
+                  ? suggestedUser.followers.filter((id) => id !== user._id)
+                  : [...suggestedUser.followers, user._id],
+              }
+            : suggestedUser // Keep other users unchanged
+        );
+  
+        dispatch(setSuggestedUsers(updatedSuggestedUsers));
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
       console.error(error);
     }
   };
+  
+  
 
   // Determine displayed posts based on active tab
   const displayedPosts =
@@ -186,7 +202,7 @@ function Profile() {
 
               {/* Follower Stats */}
               <div className="flex justify-center md:justify-start gap-6 text-center md:text-left">
-              <p>
+                <p>
                   <span className="font-semibold">
                     {userProfile?.blogs.length}
                   </span>{" "}

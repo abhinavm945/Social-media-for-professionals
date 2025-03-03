@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setblogs, setPosts } from "../redux/postSlice";
+import { setBlogs, setPosts } from "../redux/postSlice";
 
 const useGetAllPosts = () => {
   const dispatch = useDispatch();
@@ -27,7 +27,7 @@ const useGetAllPosts = () => {
           withCredentials: true,
         });
         if (res.data.success) {
-          dispatch(setblogs(res.data.blogs));
+          dispatch(setBlogs(res.data.blogs));
         }
       } catch (error) {
         console.log(error);

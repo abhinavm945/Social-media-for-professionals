@@ -3,13 +3,14 @@ import { useState, useRef, useEffect } from "react";
 import { TbX } from "react-icons/tb";
 import { ImAttachment } from "react-icons/im";
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Toast from "./Toast";
 import Avatar from "./Avatar";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import EmojiPicker from "emoji-picker-react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
+import { setBlogs } from "../redux/postSlice";
 
 const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
   const [blogTitle, setBlogTitle] = useState("");
@@ -24,7 +25,9 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const gifPickerRef = useRef(null);
+  const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
+  const { blogs } = useSelector((store) => store.post);
 
   const giphyFetch = new GiphyFetch("HgUrfU1ytCEXvrPP3ZW7iSi86LDJXhzD"); // Replace with your Giphy API key
 
@@ -124,6 +127,7 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
 
       if (res.data.success) {
         setToast({ message: res.data.message, type: "success" });
+        dispatch(setBlogs([res.data.blog, ...blogs]));
         setBlogTitle("");
         setBlogDescription("");
         setFile(null);
@@ -198,8 +202,8 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
             />
           </div>
 
-{/* Action Buttons */}
-<div className="flex items-center gap-2 mb-6">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 mb-6">
             <button
               onClick={() => {
                 setShowEmojiPicker(!showEmojiPicker);
@@ -246,8 +250,6 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
               </button>
             </div>
           )}
-
-          
 
           {/* Emoji Picker */}
           {showEmojiPicker && (

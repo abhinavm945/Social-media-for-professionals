@@ -12,15 +12,12 @@ import { toast } from "react-toastify";
 import { setUserProfile } from "../redux/authSlice.js";
 
 const Post = ({ post }) => {
-  console.log("post data",post);
-  
   const dispatch = useDispatch();
   const { user } = useSelector((store) => store.auth);
   const { posts } = useSelector((store) => store.post);
   const { userProfile } = useSelector((store) => store.auth);
 
-  const author =post?.author;
-  
+  const author = post?.author;
 
   // States
   const [text, setText] = useState("");
@@ -28,9 +25,9 @@ const Post = ({ post }) => {
   const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
   const [loading, setLoading] = useState(true); // 🔄 Add loading state
   const [isBookmark, setIsBookmark] = useState(
-    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) || false
+    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) ||
+      false
   );
-  
 
   useEffect(() => {
     // Simulate fetching delay
@@ -167,14 +164,13 @@ const Post = ({ post }) => {
             <div className="flex items-center gap-2">
               {author && (
                 <>
-                  <Avatar size={"xs"} image={author.profilePicture} />
-                  <h1 className="font-medium">{author.username}</h1>
+                  <Avatar size={"xs"} image={author?.profilePicture} />
+                  <h1 className="font-medium">{author?.username}</h1>
                 </>
               )}
             </div>
             <PostDialog
-              username={author ? author.username : "Unknown"}
-              isFollowing={true}
+              isFollowing={userProfile?.followers.includes(user?._id)}
               post={post}
             />
           </div>

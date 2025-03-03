@@ -12,13 +12,6 @@ export const addNewBlog = async (req, res) => {
     const image = req.file; // This will be undefined if no image is uploaded
     const authorId = req.user.id;
 
-    // Validate that either an image or a GIF URL is provided
-    if (!image && !gifUrl) {
-      return res.status(400).json({
-        message: "Either an image or a GIF URL is required",
-        success: false,
-      });
-    }
 
     let imageUrl = null;
 
