@@ -84,12 +84,12 @@ function Profile() {
         {},
         { withCredentials: true }
       );
-  
+
       if (res.data.success) {
         toast.success(res.data.message);
-  
+
         const isFollowing = userProfile?.followers.includes(user._id);
-  
+
         // Update only the specific user's followers list
         const updatedUserProfile = {
           ...userProfile,
@@ -97,22 +97,23 @@ function Profile() {
             ? userProfile.followers.filter((id) => id !== user._id)
             : [...userProfile.followers, user._id],
         };
-  
+
         // Update the user profile in Redux
         dispatch(setUserProfile(updatedUserProfile));
-  
+
         // Update only the followed/unfollowed suggested user
-        const updatedSuggestedUsers = suggestedUsers.map((suggestedUser) =>
-          suggestedUser._id === userProfile._id
-            ? {
-                ...suggestedUser,
-                followers: isFollowing
-                  ? suggestedUser.followers.filter((id) => id !== user._id)
-                  : [...suggestedUser.followers, user._id],
-              }
-            : suggestedUser // Keep other users unchanged
+        const updatedSuggestedUsers = suggestedUsers.map(
+          (suggestedUser) =>
+            suggestedUser._id === userProfile._id
+              ? {
+                  ...suggestedUser,
+                  followers: isFollowing
+                    ? suggestedUser.followers.filter((id) => id !== user._id)
+                    : [...suggestedUser.followers, user._id],
+                }
+              : suggestedUser // Keep other users unchanged
         );
-  
+
         dispatch(setSuggestedUsers(updatedSuggestedUsers));
       }
     } catch (error) {
@@ -120,15 +121,13 @@ function Profile() {
       console.error(error);
     }
   };
-  
-  
 
   // Determine displayed posts based on active tab
   const displayedPosts =
     activeTab === "posts"
       ? userProfile?.posts || []
       : activeTab === "saved"
-      ? userProfile?.bookmarkPosts || []
+      ? (userProfile?.bookmarkPosts && userProfile?.bookmarkBlogs) || []
       : [];
 
   // Determine displayed blogs based on active tab
@@ -258,11 +257,17 @@ function Profile() {
 
           {/* Display Posts for "Recent Content" as full posts */}
           {activeTab === "recent-content" ? (
-            <div className="flex flex-col gap-4">
-              {userProfile?.posts?.length > 0 ? (
-                userProfile.posts.map((post) => (
-                  <Post key={post._id} post={post} />
-                ))
+            <div className="flex  flex-col mx-auto gap-4 max-w-lg">
+              {userProfile?.blogs?.length || userProfile?.posts?.length ? (
+                [...(userProfile?.posts || []), ...(userProfile?.blogs || [])]
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sorting by timestamp
+                  .map((item) =>
+                    item?.blogTitle ? (
+                      <Blog key={item._id} blog={item} />
+                    ) : (
+                      <Post key={item._id} post={item} />
+                    )
+                  )
               ) : (
                 <p className="text-center text-gray-500">
                   No recent content available.
@@ -270,7 +275,7 @@ function Profile() {
               )}
             </div>
           ) : activeTab === "blogs" ? ( // Render blogs when "blogs" tab is active
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 max-w-xl mx-auto">
               {displayedBlogs?.length > 0 ? (
                 displayedBlogs.map((blog) => (
                   <Blog key={blog._id} blog={blog} />

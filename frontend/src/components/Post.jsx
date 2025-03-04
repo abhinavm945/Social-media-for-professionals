@@ -151,7 +151,7 @@ const Post = ({ post }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto  p-6 mb-6">
+    <div className="w-full max-w-lg mx-auto  p-6 mb-6">
       {loading ? (
         // 🔄 Loader (Replace with a better spinner if needed)
         <div className="flex justify-center items-center h-screen">

@@ -12,7 +12,6 @@ export const addNewBlog = async (req, res) => {
     const image = req.file; // This will be undefined if no image is uploaded
     const authorId = req.user.id;
 
-
     let imageUrl = null;
 
     // Handle image upload
@@ -106,8 +105,7 @@ export const getAllBlog = async (req, res) => {
 export const getUserBlog = async (req, res) => {
   try {
     const authorId = req.user.id;
-    const blogs = await Blog
-      .find({ author: authorId })
+    const blogs = await Blog.find({ author: authorId })
       .sort({ createdAt: -1 })
       .populate({
         path: "author",

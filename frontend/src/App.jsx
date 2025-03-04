@@ -14,6 +14,7 @@ import { setOnlineUser } from "./redux/chatSlice";
 import { setLikeNotification } from "./redux/rtnSlice";
 import NotificationsPage from "./components/NotificationsPage";
 import ProtectedRoutes from "./components/ProtectedRoutes";
+import Trending from "./components/Trending";
 
 const browserRouter = createBrowserRouter([
   {
@@ -62,6 +63,14 @@ const browserRouter = createBrowserRouter([
         element: (
           <ProtectedRoutes>
             <NotificationsPage />
+          </ProtectedRoutes>
+        ),
+      },
+      {
+        path: "/trending",
+        element: (
+          <ProtectedRoutes>
+            <Trending />
           </ProtectedRoutes>
         ),
       },

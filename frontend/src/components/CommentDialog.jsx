@@ -8,11 +8,14 @@ import EmojiPicker from "emoji-picker-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "../redux/postSlice";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { setUserProfile } from "../redux/authSlice";
 
 const CommentDialog = ({ open, setOpen, post }) => {
   const [text, setText] = useState("");
   const dispatch = useDispatch();
   const { posts } = useSelector((store) => store.post);
+  const { user, userProfile} = useSelector((store) => store.auth);
   const [comment, setComment] = useState(post?.comments || []);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const dialogRef = useRef(null);
@@ -72,43 +75,47 @@ const CommentDialog = ({ open, setOpen, post }) => {
     setText((prevText) => prevText + emoji.emoji);
   };
 
-  const sendMessageHandler = async () => {
-    if (!text.trim()) {
-      alert("Comment cannot be empty");
-      return;
-    }
+  const commentHandler = async () => {
+    if (!text.trim()) return toast.warning("Comment cannot be empty.");
+    if (!user) return toast.error("You must be logged in to comment.");
 
     try {
       const res = await axios.post(
         `http://localhost:8000/api/v1/post/${post._id}/comment`,
         { text },
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
 
       if (res.data.success && res.data.comment) {
-        const newComment = res.data.comment;
-
-        // Update local state and global state
-        const updatedComments = [newComment, ...comment];
-        setComment(updatedComments);
-
         const updatedPosts = posts.map((p) =>
-          p._id === post._id ? { ...p, comments: updatedComments } : p
+          p._id === post._id
+            ? { ...p, comments: [res.data.comment, ...p.comments] }
+            : p
         );
-
         dispatch(setPosts(updatedPosts));
-        setText(""); // Clear input field
+
+        if (userProfile && userProfile._id === post.author[0]?._id) {
+          const updatedUserPosts = {
+            ...userProfile,
+            posts: userProfile.posts.map((p) =>
+              p._id === post._id
+                ? { ...p, comments: [res.data.comment, ...p.comments] }
+                : p
+            ),
+          };
+          dispatch(setUserProfile(updatedUserPosts));
+        }
+
+        setText("");
       } else {
-        alert("Failed to post comment");
+        toast.error("Failed to post comment.");
       }
     } catch (error) {
-      console.error("Error posting comment:", error);
-      alert("An error occurred while posting the comment. Please try again.");
+      toast.error("An error occurred while posting the comment.");
+      console.log(error);
     }
   };
 
@@ -222,7 +229,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
                 <button
                   type="submit"
                   disabled={!text.trim()}
-                  onClick={sendMessageHandler}
+                  onClick={commentHandler}
                   className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer ${
                     text.trim()
                       ? "bg-blue-500 text-white hover:bg-blue-600"

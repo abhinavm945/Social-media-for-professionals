@@ -8,7 +8,8 @@ const commentSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    post: { type: mongoose.Schema.Types.ObjectId, ref: "Post", required: true },
+    post: { type: mongoose.Schema.Types.ObjectId, ref: "Post", default: null },
+    blog: { type: mongoose.Schema.Types.ObjectId, ref: "Blog", default: null },
   },
   { timestamps: true }
 );
