@@ -10,16 +10,27 @@ import { setPosts } from "../redux/postSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { setUserProfile } from "../redux/authSlice";
+import { Bookmark, BookmarkCheck, MessageCircle, Send } from "lucide-react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const CommentDialog = ({ open, setOpen, post }) => {
   const [text, setText] = useState("");
   const dispatch = useDispatch();
   const { posts } = useSelector((store) => store.post);
-  const { user, userProfile} = useSelector((store) => store.auth);
+  const { user, userProfile } = useSelector((store) => store.auth);
   const [comment, setComment] = useState(post?.comments || []);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
+
+  // Like state
+  const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
+
+  // Bookmark state
+  const [isBookmark, setIsBookmark] = useState(
+    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) ||
+      false
+  );
 
   // Extract author safely
   const author = post?.author;
@@ -73,6 +84,70 @@ const CommentDialog = ({ open, setOpen, post }) => {
 
   const handleEmojiClick = (emoji) => {
     setText((prevText) => prevText + emoji.emoji);
+  };
+
+  const LikeOrDisLikeHandler = async () => {
+    if (!user) return toast.error("You need to be logged in to like posts.");
+
+    try {
+      const action = liked ? "dislike" : "like";
+      const res = await axios.post(
+        `http://localhost:8000/api/v1/post/${post._id}/${action}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        setLiked(!liked);
+
+        const updatedPosts = posts.map((p) =>
+          p._id === post._id
+            ? {
+                ...p,
+                likes: liked
+                  ? p.likes.filter((id) => id !== user._id)
+                  : [...p.likes, user._id],
+              }
+            : p
+        );
+        dispatch(setPosts(updatedPosts));
+
+        if (userProfile && userProfile._id === post.author[0]?._id) {
+          const updatedUserPosts = {
+            ...userProfile,
+            posts: userProfile.posts.map((p) =>
+              p._id === post._id
+                ? {
+                    ...p,
+                    likes: liked
+                      ? p.likes.filter((id) => id !== user._id)
+                      : [...p.likes, user._id],
+                  }
+                : p
+            ),
+          };
+          dispatch(setUserProfile(updatedUserPosts));
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to update like status. Try again.");
+      console.log(error);
+    }
+  };
+
+  const bookmarkHandler = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/v1/post/${post?._id}/bookmark`,
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setIsBookmark(res.data.type !== "unsaved");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const commentHandler = async () => {
@@ -141,12 +216,12 @@ const CommentDialog = ({ open, setOpen, post }) => {
             {/* Header */}
             <div className="flex justify-between items-center p-4">
               <div className="flex gap-3 items-center">
-                <Link to={`/profile/${author?.username}`}>
+                <Link to={`/profile/${author?._id}`}>
                   <Avatar size="xs" image={author?.profilePicture || ""} />
                 </Link>
                 <div>
                   <Link
-                    to={`/profile/${author?.username}`}
+                    to={`/profile/${author?._id}`}
                     className="font-semibold text-sm hover:underline"
                   >
                     {author?.username || "Unknown"}
@@ -163,7 +238,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
             <hr />
 
             {/* Comments Section */}
-            <div className="flex-1 overflow-y-auto max-h-96 p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto max-h-96 p-4 space-y-2 custom-scrollbar">
               {comment.length > 0 ? (
                 comment.map((c) => (
                   <div key={c._id} className="flex items-start gap-3">
@@ -194,6 +269,46 @@ const CommentDialog = ({ open, setOpen, post }) => {
                 <p className="text-center text-gray-500">No comments yet.</p>
               )}
             </div>
+
+            {/* Like, Comment, Share, and Bookmark Buttons */}
+            <div className="flex justify-between items-center p-4 border-t border-gray-300">
+              <div className="flex items-center gap-3">
+                {liked ? (
+                  <FaHeart
+                    size={"23px"}
+                    className="cursor-pointer text-red-600 hover:text-gray-600"
+                    onClick={LikeOrDisLikeHandler}
+                  />
+                ) : (
+                  <FaRegHeart
+                    size={"23px"}
+                    className="cursor-pointer hover:text-gray-600"
+                    onClick={LikeOrDisLikeHandler}
+                  />
+                )}
+
+                <MessageCircle
+                  className="cursor-pointer hover:text-gray-600"
+                />
+                <Send className="cursor-pointer hover:text-gray-600" />
+              </div>
+              {isBookmark ? (
+                <BookmarkCheck
+                  onClick={bookmarkHandler}
+                  className="cursor-pointer hover:text-gray-600"
+                />
+              ) : (
+                <Bookmark
+                  onClick={bookmarkHandler}
+                  className="cursor-pointer hover:text-gray-600"
+                />
+              )}
+            </div>
+
+            {/* Likes Count */}
+            <span className="font-medium block px-4 pb-2">
+              {post.likes.length} likes
+            </span>
 
             {/* Comment Input */}
             <div className="p-3 border-t border-gray-300">

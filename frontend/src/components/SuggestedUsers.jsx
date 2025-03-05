@@ -3,7 +3,11 @@ import { Link } from "react-router-dom";
 import Avatar from "./Avatar";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { setSuggestedUsers, setUserProfile } from "../redux/authSlice";
+import {
+  setAuthUser,
+  setSuggestedUsers,
+  setUserProfile,
+} from "../redux/authSlice";
 
 const SuggestedUsers = () => {
   const { suggestedUsers, user, userProfile } = useSelector(
@@ -48,6 +52,15 @@ const SuggestedUsers = () => {
               : userItem // Keep other suggested users unchanged
         );
         dispatch(setSuggestedUsers(updatedSuggestedUsers));
+
+        const updatedAuthUser = {
+          ...user,
+          following: isFollowing
+            ? user.following.filter((id) => id !== suggestedUser._id) // Remove from following
+            : [...user.following, suggestedUser._id], // Add to following
+        };
+
+        dispatch(setAuthUser(updatedAuthUser));
 
         // Also update `userProfile` followers list **if we are on their profile page**
         if (userProfile._id === suggestedUser._id) {

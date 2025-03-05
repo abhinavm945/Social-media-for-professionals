@@ -10,6 +10,7 @@ import CommentDialog from "./CommentDialog";
 import { setPosts } from "../redux/postSlice.js";
 import { toast } from "react-toastify";
 import { setUserProfile } from "../redux/authSlice.js";
+import { Link } from "react-router-dom";
 
 const Post = ({ post }) => {
   const dispatch = useDispatch();
@@ -161,14 +162,18 @@ const Post = ({ post }) => {
         <>
           {/* Post Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <Link
+              to={`/profile/${author?._id}`}
+              className="flex items-center gap-2"
+            >
               {author && (
                 <>
                   <Avatar size={"xs"} image={author?.profilePicture} />
+
                   <h1 className="font-medium">{author?.username}</h1>
                 </>
               )}
-            </div>
+            </Link>
             <PostDialog
               isFollowing={userProfile?.followers.includes(user?._id)}
               post={post}

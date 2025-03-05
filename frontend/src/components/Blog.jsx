@@ -10,13 +10,13 @@ import BlogCommentDialog from "./BlogCommentDialog";
 import { setBlogs } from "../redux/postSlice.js";
 import { toast } from "react-toastify";
 import { setUserProfile } from "../redux/authSlice.js";
+import { Link } from "react-router-dom";
 
 const Blog = ({ blog }) => {
   const dispatch = useDispatch();
   const [text, setText] = useState("");
-  const { user, userProfile} = useSelector((store) => store.auth);
+  const { user, userProfile } = useSelector((store) => store.auth);
   const { blogs } = useSelector((store) => store.post);
-
 
   const author = blog?.author;
 
@@ -151,14 +151,18 @@ const Blog = ({ blog }) => {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <Link
+              to={`/profile/${author?._id}`}
+              className="flex items-center gap-2"
+            >
               {author && (
                 <>
                   <Avatar size={"xs"} image={author?.profilePicture} />
+
                   <h1 className="font-medium">{author?.username}</h1>
                 </>
               )}
-            </div>
+            </Link>
             <BlogDialog blog={blog} />
           </div>
 

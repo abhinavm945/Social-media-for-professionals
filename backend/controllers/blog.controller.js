@@ -313,31 +313,55 @@ export const bookmarkBlog = async (req, res) => {
   try {
     const blogId = req.params.id;
     const authorId = req.user.id;
-    const blog = await Blog.findById(blogId);
+
+    // Find the blog and populate author and comments
+    const blog = await Blog.findById(blogId)
+      .populate({
+        path: "author",
+        select: "username profilePicture", // Select only necessary fields
+      })
+      .populate({
+        path: "comments",
+        sort: { createdAt: -1 }, // Sort comments by creation date
+        populate: {
+          path: "author",
+          select: "username profilePicture", // Select only necessary fields
+        },
+      });
+
     if (!blog) {
       return res
         .status(404)
-        .json({ message: "blog not found", success: false });
+        .json({ message: "Blog not found", success: false });
     }
+
     const user = await User.findById(authorId);
+
     if (user.bookmarkBlogs.includes(blog._id)) {
-      // already bookmarked -> remove from the bookmark
+      // Already bookmarked -> remove from the bookmark
       await user.updateOne({ $pull: { bookmarkBlogs: blog._id } });
       await user.save();
       return res.status(200).json({
         type: "unsaved",
-        message: "blog remove form bookmark",
+        message: "Blog removed from bookmark",
         success: true,
+        blog, // Return the populated blog
       });
     } else {
-      // bookmark blog
+      // Bookmark blog
       await user.updateOne({ $addToSet: { bookmarkBlogs: blog._id } });
       await user.save();
-      return res
-        .status(200)
-        .json({ type: "saved", message: "blog bookmarked", success: true });
+      return res.status(200).json({
+        type: "saved",
+        message: "Blog bookmarked",
+        success: true,
+        blog, // Return the populated blog
+      });
     }
   } catch (error) {
     console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };

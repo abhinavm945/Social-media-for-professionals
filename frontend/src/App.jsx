@@ -15,6 +15,7 @@ import { setLikeNotification } from "./redux/rtnSlice";
 import NotificationsPage from "./components/NotificationsPage";
 import ProtectedRoutes from "./components/ProtectedRoutes";
 import Trending from "./components/Trending";
+import Search from "./components/Search";
 
 const browserRouter = createBrowserRouter([
   {
@@ -71,6 +72,14 @@ const browserRouter = createBrowserRouter([
         element: (
           <ProtectedRoutes>
             <Trending />
+          </ProtectedRoutes>
+        ),
+      },
+      {
+        path: "/search",
+        element: (
+          <ProtectedRoutes>
+            <Search />
           </ProtectedRoutes>
         ),
       },

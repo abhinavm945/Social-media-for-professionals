@@ -11,13 +11,19 @@ import { setPosts } from "../redux/postSlice";
 import axios from "axios";
 import Post from "./Post";
 import CommentDialog from "./CommentDialog";
+import BlogCommentDialog from "./BlogCommentDialog"; // Import the BlogCommentDialog
 import Blog from "./Blog"; // Import the Blog component
 import { toast } from "react-toastify"; // For showing notifications
-import { setSuggestedUsers, setUserProfile } from "../redux/authSlice";
+import {
+  setAuthUser,
+  setSuggestedUsers,
+  setUserProfile,
+} from "../redux/authSlice";
 
 function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedBlog, setSelectedBlog] = useState(null); // State for selected blog
   const params = useParams();
   const userId = params.id;
   useGetUserProfile(userId);
@@ -39,9 +45,17 @@ function Profile() {
     setSelectedPost(post); // Store the clicked post data
   };
 
+  const handleOpenBlogDialog = (blog) => {
+    setSelectedBlog(blog); // Store the clicked blog data
+  };
+
   // Close the comment dialog
   const handleCloseDialog = () => {
     setSelectedPost(null); // Reset the selected post when closing
+  };
+
+  const handleCloseBlogDialog = () => {
+    setSelectedBlog(null); // Reset the selected blog when closing
   };
 
   // Like or Dislike Handler
@@ -115,6 +129,15 @@ function Profile() {
         );
 
         dispatch(setSuggestedUsers(updatedSuggestedUsers));
+
+        const updatedAuthUser = {
+          ...user,
+          following: isFollowing
+            ? user.following.filter((id) => id !== userProfile?._id) // Remove from following
+            : [...user.following, userProfile?._id], // Add to following
+        };
+
+        dispatch(setAuthUser(updatedAuthUser));
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -122,12 +145,18 @@ function Profile() {
     }
   };
 
+  // Combine bookmarkPosts and bookmarkBlogs for the "saved" tab
+  const savedItems = [
+    ...(userProfile?.bookmarkPosts || []),
+    ...(userProfile?.bookmarkBlogs || []),
+  ];
+
   // Determine displayed posts based on active tab
   const displayedPosts =
     activeTab === "posts"
       ? userProfile?.posts || []
       : activeTab === "saved"
-      ? (userProfile?.bookmarkPosts && userProfile?.bookmarkBlogs) || []
+      ? savedItems
       : [];
 
   // Determine displayed blogs based on active tab
@@ -289,7 +318,7 @@ function Profile() {
               {displayedPosts?.length > 0 ? (
                 displayedPosts.map((post) => (
                   <div
-                    onDoubleClick={() => handleOpenDialog(post)}
+                    onClick={() => handleOpenDialog(post)}
                     key={post?._id}
                     className="relative group cursor-pointer"
                   >
@@ -330,57 +359,65 @@ function Profile() {
             </div>
           ) : activeTab === "saved" ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-              {displayedPosts?.length > 0 ? (
-                displayedPosts.map((post) => (
-                  <div
-                    onDoubleClick={() => handleOpenDialog(post)}
-                    key={post?._id}
-                    className="relative group cursor-pointer"
-                  >
-                    <img
-                      src={post?.image}
-                      alt="postimage"
-                      className="rounded-md w-full aspect-square object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="flex items-center text-white space-x-4">
-                        <button
-                          onClick={() => LikeOrDisLikeHandler(post?._id)}
-                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
-                        >
-                          <span>{post?.likes?.length}</span>
-                          {post?.likes?.includes(user._id) ? (
-                            <FaHeart size={22} className="text-red-500" />
-                          ) : (
-                            <FaRegHeart size={22} />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleOpenDialog(post)}
-                          className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
-                        >
-                          <span>{post?.comments?.length}</span>
-                          <MessageCircle />
-                        </button>
+              {savedItems?.length > 0 ? (
+                savedItems.map((item) =>
+                  item?.blogTitle ? ( // Check if it's a blog
+                    <div
+                      key={item?._id}
+                      className="relative group cursor-pointer"
+                      onClick={() => handleOpenBlogDialog(item)}
+                    >
+                      <img
+                        src={item?.image || item?.gifUrl}
+                        alt="saved-item"
+                        className="rounded-md w-full aspect-square object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="flex items-center text-white space-x-4"></div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ) : (
+                    <div
+                      key={item._id}
+                      className="relative group cursor-pointer"
+                      onClick={() => handleOpenDialog(item)}
+                    >
+                      <img
+                        src={item?.image}
+                        alt="saved-item"
+                        className="rounded-md w-full aspect-square object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="flex items-center text-white space-x-4"></div>
+                      </div>
+                    </div>
+                  )
+                )
               ) : (
                 <p className="text-center text-gray-500 col-span-3">
-                  No saved posts available.
+                  No saved items available.
                 </p>
               )}
             </div>
           ) : null}
         </div>
       </div>
+
+      {/* Comment Dialog for Posts */}
       {selectedPost && (
         <CommentDialog
           open={!!selectedPost} // Open only if a post is selected
           setOpen={handleCloseDialog} // Close dialog
           post={selectedPost} // Pass selected post
-          comments={selectedPost?.comments || []} // Ensure comments array exists
+        />
+      )}
+
+      {/* Comment Dialog for Blogs */}
+      {selectedBlog && (
+        <BlogCommentDialog
+          open={!!selectedBlog} // Open only if a blog is selected
+          setOpen={handleCloseBlogDialog} // Close dialog
+          blog={selectedBlog} // Pass selected blog
         />
       )}
 

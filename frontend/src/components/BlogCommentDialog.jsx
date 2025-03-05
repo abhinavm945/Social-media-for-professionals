@@ -10,6 +10,8 @@ import axios from "axios";
 import parse from "html-react-parser";
 import { setUserProfile } from "../redux/authSlice";
 import { toast } from "react-toastify";
+import { Bookmark, BookmarkCheck, MessageCircle, Send } from "lucide-react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const BlogCommentDialog = ({ open, setOpen, blog }) => {
   const [text, setText] = useState("");
@@ -21,6 +23,15 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const author = blog?.author;
+
+  // Like state
+  const [liked, setLiked] = useState(blog.likes.includes(user?._id) || false);
+
+  // Bookmark state
+  const [isBookmark, setIsBookmark] = useState(
+    userProfile?.bookmarks?.some((bookmark) => bookmark._id === blog?._id) ||
+      false
+  );
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -52,6 +63,65 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
 
   const handleEmojiClick = (emoji) => {
     setText((prevText) => prevText + emoji.emoji);
+  };
+
+  const LikeOrDisLikeHandler = async () => {
+    if (!user) return toast.error("You need to be logged in to like blogs.");
+    try {
+      const action = liked ? "dislike" : "like";
+      const res = await axios.post(
+        `http://localhost:8000/api/v1/blog/${blog._id}/${action}`,
+        {},
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        setLiked(!liked);
+        const updatedBlogs = blogs.map((b) =>
+          b._id === blog._id
+            ? {
+                ...b,
+                likes: liked
+                  ? b.likes.filter((id) => id !== user._id)
+                  : [...b.likes, user._id],
+              }
+            : b
+        );
+        dispatch(setBlogs(updatedBlogs));
+        if (userProfile && userProfile._id === blog.author[0]?._id) {
+          const updatedUserBlogs = {
+            ...userProfile,
+            blogs: userProfile.blogs.map((p) =>
+              p._id === blog._id
+                ? {
+                    ...p,
+                    likes: liked
+                      ? p.likes.filter((id) => id !== user._id)
+                      : [...p.likes, user._id],
+                  }
+                : p
+            ),
+          };
+          dispatch(setUserProfile(updatedUserBlogs));
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to update like status. Try again.", error);
+    }
+  };
+
+  const bookmarkHandler = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/v1/blog/${blog?._id}/bookmark`,
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setIsBookmark(res.data.type !== "unsaved");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const commentHandler = async () => {
@@ -106,12 +176,12 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
         <div className="p-4 flex flex-col gap-4 custom-scrollbar">
           {/* Author Info */}
           <div className="flex items-center gap-3">
-            <Link to={`/profile/${author?.username}`}>
+            <Link to={`/profile/${author?._id}`}>
               <Avatar size="md" image={author?.profilePicture || ""} />
             </Link>
             <div>
               <Link
-                to={`/profile/${author?.username}`}
+                to={`/profile/${author?._id}`}
                 className="font-semibold text-lg hover:underline"
               >
                 {author?.username || "Unknown"}
@@ -144,16 +214,49 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
             />
           )}
 
-          {/* Blog Likes */}
-          <div className="text-gray-600 text-sm">
-            Likes: {blog.likes.length}
+          {/* Like, Comment, Share, and Bookmark Buttons */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              {liked ? (
+                <FaHeart
+                  size={"23px"}
+                  className="cursor-pointer text-red-600 hover:text-gray-600"
+                  onClick={LikeOrDisLikeHandler}
+                />
+              ) : (
+                <FaRegHeart
+                  size={"23px"}
+                  className="cursor-pointer hover:text-gray-600"
+                  onClick={LikeOrDisLikeHandler}
+                />
+              )}
+
+              <MessageCircle className="cursor-pointer hover:text-gray-600" />
+              <Send className="cursor-pointer hover:text-gray-600" />
+            </div>
+            {isBookmark ? (
+              <BookmarkCheck
+                onClick={bookmarkHandler}
+                className="cursor-pointer hover:text-gray-600"
+              />
+            ) : (
+              <Bookmark
+                onClick={bookmarkHandler}
+                className="cursor-pointer hover:text-gray-600"
+              />
+            )}
           </div>
+
+          {/* Likes Count */}
+          <span className="font-medium block my-2">
+            {blog.likes.length} likes
+          </span>
         </div>
 
         <hr />
 
         {/* Comments Section - Scrollable */}
-          <p className="font-bold mx-4 my-2 text-2xl">Comments</p>
+        <p className="font-bold mx-4 my-2 text-2xl">Comments</p>
         <div className="flex-1 p-4 space-y-2">
           {comments.length > 0 ? (
             comments.map((c) => (
