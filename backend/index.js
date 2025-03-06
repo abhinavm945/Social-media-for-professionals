@@ -8,10 +8,13 @@ import postRoute from "./routes/post.route.js";
 import messageRoute from "./routes/message.route.js";
 import blogRoute from "./routes/blog.route.js";
 import { app, server } from "./socket/socket.js";
+import path from "path";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 8000;
+
+const __dirname = path.resolve();
 
 // Middleware
 app.use(express.json());
@@ -23,13 +26,21 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-//api
+// API Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/post", postRoute);
 app.use("/api/v1/message", messageRoute);
 app.use("/api/v1/blog", blogRoute);
 
-// Routes
+// Serve static files from the frontend build directory
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+// Catch-all route to serve the frontend's index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+});
+
+// Default route
 app.get("/", (req, res) => {
   return res.status(200).json({
     message: "I am coming from backend",
