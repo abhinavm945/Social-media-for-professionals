@@ -12,6 +12,7 @@ import { setUserProfile } from "../redux/authSlice";
 import { toast } from "react-toastify";
 import { Bookmark, BookmarkCheck, MessageCircle, Send } from "lucide-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import BlogDialog from "./BlogDialog";
 
 const BlogCommentDialog = ({ open, setOpen, blog }) => {
   const [text, setText] = useState("");
@@ -25,11 +26,11 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
   const author = blog?.author;
 
   // Like state
-  const [liked, setLiked] = useState(blog.likes.includes(user?._id) || false);
+  const [liked, setLiked] = useState(blog?.likes?.includes(user?._id) || false);
 
   // Bookmark state
   const [isBookmark, setIsBookmark] = useState(
-    userProfile?.bookmarks?.some((bookmark) => bookmark._id === blog?._id) ||
+    userProfile?.bookmarks?.some((bookmark) => bookmark?._id === blog?._id) ||
       false
   );
 
@@ -87,7 +88,7 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
             : b
         );
         dispatch(setBlogs(updatedBlogs));
-        if (userProfile && userProfile._id === blog.author[0]?._id) {
+        if (userProfile && userProfile._id === blog.author?._id) {
           const updatedUserBlogs = {
             ...userProfile,
             blogs: userProfile.blogs.map((p) =>
@@ -146,13 +147,13 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
         );
         dispatch(setBlogs(updatedBlogs));
 
-        if (userProfile && userProfile._id === blog.author[0]?._id) {
+        if (userProfile && userProfile._id === blog.author?._id) {
           const updatedUserBlogs = {
             ...userProfile,
-            blogs: userProfile.blogs.map((p) =>
-              p._id === blog._id
-                ? { ...p, comments: [res.data.comment, ...p.comments] }
-                : p
+            blogs: userProfile.blogs.map((b) =>
+              b._id === blog._id
+                ? { ...b, comments: [res.data.comment, ...b.comments] }
+                : b
             ),
           };
           dispatch(setUserProfile(updatedUserBlogs));
@@ -187,29 +188,32 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
                 {author?.username || "Unknown"}
               </Link>
               <p className="text-sm text-gray-500">
-                {new Date(blog.createdAt).toLocaleString()}
+                {new Date(blog?.createdAt).toLocaleString()}
               </p>
+            </div>
+            <div>
+              <BlogDialog blog={blog} />
             </div>
           </div>
 
           {/* Blog Title & Description */}
-          <h2 className="text-xl font-bold">{blog.blogTitle}</h2>
+          <h2 className="text-xl font-bold">{blog?.blogTitle}</h2>
           <div className="text-gray-700 text-sm">
-            {parse(blog.blogDiscription)}
+            {parse(blog?.blogDiscription)}
           </div>
 
           {/* Blog Image / GIF */}
-          {blog.image && (
+          {blog?.image && (
             <img
               className="max-w-lg max-h-96 object-contain rounded-lg"
-              src={blog.image}
+              src={blog?.image}
               alt="Blog"
             />
           )}
-          {blog.gifUrl && (
+          {blog?.gifUrl && (
             <img
               className="max-w-lg max-h-96 object-contain rounded-lg"
-              src={blog.gifUrl}
+              src={blog?.gifUrl}
               alt="GIF"
             />
           )}
@@ -248,9 +252,7 @@ const BlogCommentDialog = ({ open, setOpen, blog }) => {
           </div>
 
           {/* Likes Count */}
-          <span className="font-medium block my-2">
-            {blog.likes.length} likes
-          </span>
+          <span className="font-medium block">{blog?.likes?.length} likes</span>
         </div>
 
         <hr />

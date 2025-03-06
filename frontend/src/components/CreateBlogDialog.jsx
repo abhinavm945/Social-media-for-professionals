@@ -11,6 +11,7 @@ import "react-quill/dist/quill.snow.css";
 import EmojiPicker from "emoji-picker-react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { setBlogs } from "../redux/postSlice";
+import { setUserProfile } from "../redux/authSlice";
 
 const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
   const [blogTitle, setBlogTitle] = useState("");
@@ -26,7 +27,7 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
   const emojiPickerRef = useRef(null);
   const gifPickerRef = useRef(null);
   const dispatch = useDispatch();
-  const { user } = useSelector((store) => store.auth);
+  const { user, userProfile } = useSelector((store) => store.auth);
   const { blogs } = useSelector((store) => store.post);
 
   const giphyFetch = new GiphyFetch("HgUrfU1ytCEXvrPP3ZW7iSi86LDJXhzD"); // Replace with your Giphy API key
@@ -133,6 +134,13 @@ const CreateBlogDialog = ({ createBlog, setCreateBlog }) => {
         setFile(null);
         setImagePreview(null);
         setCreateBlog(false);
+        if (userProfile && userProfile._id === user?._id) {
+          const updatedUserBlogs = {
+            ...userProfile,
+            blogs: [res.data.blog, ...(userProfile?.blogs ?? [])],
+          };
+          dispatch(setUserProfile(updatedUserBlogs));
+        }
         setTimeout(() => setToast(null), 3000);
       }
     } catch (error) {

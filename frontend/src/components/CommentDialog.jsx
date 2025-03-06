@@ -24,11 +24,11 @@ const CommentDialog = ({ open, setOpen, post }) => {
   const emojiPickerRef = useRef(null);
 
   // Like state
-  const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
+  const [liked, setLiked] = useState(post?.likes?.includes(user?._id) || false);
 
   // Bookmark state
   const [isBookmark, setIsBookmark] = useState(
-    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) ||
+    userProfile?.bookmarks?.some((bookmark) => bookmark?._id === post?._id) ||
       false
   );
 
@@ -112,7 +112,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        if (userProfile && userProfile._id === post.author[0]?._id) {
+        if (userProfile && userProfile._id === post.author?._id) {
           const updatedUserPosts = {
             ...userProfile,
             posts: userProfile.posts.map((p) =>
@@ -172,7 +172,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        if (userProfile && userProfile._id === post.author[0]?._id) {
+        if (userProfile && userProfile._id === post.author?._id) {
           const updatedUserPosts = {
             ...userProfile,
             posts: userProfile.posts.map((p) =>
@@ -206,7 +206,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
           <div className="w-1/2">
             <img
               className="w-full h-full object-cover rounded-l-lg"
-              src={post.image}
+              src={post?.image}
               alt="Post"
             />
           </div>
@@ -241,16 +241,16 @@ const CommentDialog = ({ open, setOpen, post }) => {
             <div className="flex-1 overflow-y-auto max-h-96 p-4 space-y-2 custom-scrollbar">
               {comment.length > 0 ? (
                 comment.map((c) => (
-                  <div key={c._id} className="flex items-start gap-3">
-                    {c.author ? (
+                  <div key={c?._id} className="flex items-start gap-3">
+                    {c?.author ? (
                       <>
                         <Avatar
                           size="xs"
-                          image={c.author?.profilePicture || ""}
+                          image={c?.author?.profilePicture || ""}
                         />
                         <div>
                           <p className="font-semibold text-sm">
-                            {c.author.username || "Unknown"}
+                            {c?.author?.username || "Unknown"}
                           </p>
                           <p className="text-gray-700">{c.text}</p>
                         </div>
@@ -260,7 +260,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
                         <p className="text-gray-500 italic">
                           Comment by anonymous user
                         </p>
-                        <p className="text-gray-700">{c.text}</p>
+                        <p className="text-gray-700">{c?.text}</p>
                       </div>
                     )}
                   </div>
@@ -307,7 +307,7 @@ const CommentDialog = ({ open, setOpen, post }) => {
 
             {/* Likes Count */}
             <span className="font-medium block px-4 pb-2">
-              {post.likes.length} likes
+              {post?.likes.length} likes
             </span>
 
             {/* Comment Input */}

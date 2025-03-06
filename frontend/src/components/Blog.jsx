@@ -22,10 +22,10 @@ const Blog = ({ blog }) => {
 
   // States
   const [open, setOpen] = useState(false);
-  const [liked, setLiked] = useState(blog.likes.includes(user?._id) || false);
+  const [liked, setLiked] = useState(blog?.likes.includes(user?._id) || false);
   const [loading, setLoading] = useState(true);
   const [isBookmark, setIsBookmark] = useState(
-    userProfile?.bookmarks?.some((bookmark) => bookmark._id === blog?._id) ||
+    userProfile?.bookmarkBlogs?.some((bookmark) => bookmark._id === blog?._id) ||
       false
   );
 
@@ -37,7 +37,7 @@ const Blog = ({ blog }) => {
   }, []);
 
   const changeEventHandler = (e) => {
-    setText(e.target.value.trim());
+    setText(e.target.value);
   };
 
   const LikeOrDisLikeHandler = async () => {
@@ -62,7 +62,7 @@ const Blog = ({ blog }) => {
             : b
         );
         dispatch(setBlogs(updatedBlogs));
-        if (userProfile && userProfile._id === blog.author[0]?._id) {
+        if (userProfile && userProfile._id === blog.author?._id) {
           const updatedUserBlogs = {
             ...userProfile,
             blogs: userProfile.blogs.map((p) =>
@@ -85,6 +85,7 @@ const Blog = ({ blog }) => {
   };
 
   const commentHandler = async () => {
+    const text = text.trim();
     if (!text.trim()) return toast.warning("Comment cannot be empty.");
     if (!user) return toast.error("You must be logged in to comment.");
 
@@ -106,7 +107,7 @@ const Blog = ({ blog }) => {
         );
         dispatch(setBlogs(updatedBlogs));
 
-        if (userProfile && userProfile._id === blog.author[0]?._id) {
+        if (userProfile && userProfile._id === blog.author?._id) {
           const updatedUserBlogs = {
             ...userProfile,
             blogs: userProfile.blogs.map((p) =>
@@ -227,15 +228,15 @@ const Blog = ({ blog }) => {
           </div>
 
           <span className="font-medium block my-2">
-            {blog.likes.length} likes
+            {blog?.likes.length} likes
           </span>
 
-          {blog.comments.length > 0 && (
+          {blog?.comments.length > 0 && (
             <span
               onClick={() => setOpen(true)}
               className="cursor-pointer text-sm text-gray-600"
             >
-              View all {blog.comments.length} comments
+              View all {blog?.comments.length} comments
             </span>
           )}
           {/* Add Comment */}

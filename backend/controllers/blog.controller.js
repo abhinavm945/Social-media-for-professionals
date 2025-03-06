@@ -335,6 +335,8 @@ export const bookmarkBlog = async (req, res) => {
         .json({ message: "Blog not found", success: false });
     }
 
+    console.log(blog);
+
     const user = await User.findById(authorId);
 
     if (user.bookmarkBlogs.includes(blog._id)) {

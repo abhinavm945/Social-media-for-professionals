@@ -4,21 +4,24 @@ import { useSelector, useDispatch } from "react-redux";
 import Toast from "./Toast";
 import axios from "axios";
 import { setPosts } from "../redux/postSlice.js";
-import { setUserProfile, setSuggestedUsers } from "../redux/authSlice.js";
+import { setUserProfile, setSuggestedUsers, setAuthUser } from "../redux/authSlice.js";
 
 function PostDialog({ post }) {
-  
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const dispatch = useDispatch();
 
   const dialogRef = useRef(null);
-  const { user, userProfile, suggestedUsers } = useSelector((store) => store.auth);
+  const { user, userProfile, suggestedUsers } = useSelector(
+    (store) => store.auth
+  );
   const { posts } = useSelector((store) => store.post);
   const author = post?.author || null;
 
   // ✅ Ensure author exists before checking if user is following
-  const isFollowing = author ? userProfile?.followers.includes(author._id) : false;
+  const isFollowing = author
+    ? userProfile?.followers.includes(author._id)
+    : false;
   const [following, setFollowing] = useState(isFollowing);
 
   useEffect(() => {
@@ -57,13 +60,22 @@ function PostDialog({ post }) {
         setFollowing(isFollowingNow);
         setToast({ message: res.data.message, type: "success" });
 
+        const updatedAuthUser = {
+          ...user,
+          following: isFollowing
+            ? user.following.filter((id) => id !== author?._id) // Remove from following
+            : [...user.following, author?._id], // Add to following
+        };
+
+        dispatch(setAuthUser(updatedAuthUser));
+
         // ✅ Update `userProfile` if logged-in user is performing the action
         if (user._id === userProfile._id) {
           const updatedUserProfile = {
             ...userProfile,
             following: isFollowingNow
-              ? [...userProfile.following, author._id]
-              : userProfile.following.filter((id) => id !== author._id),
+              ? [...userProfile.following, author?._id]
+              : userProfile.following.filter((id) => id !== author?._id),
           };
           dispatch(setUserProfile(updatedUserProfile));
         }
@@ -74,20 +86,20 @@ function PostDialog({ post }) {
             ? {
                 ...userItem,
                 followers: isFollowingNow
-                  ? [...userItem.followers, user._id]
-                  : userItem.followers.filter((id) => id !== user._id),
+                  ? [...userItem.followers, user?._id]
+                  : userItem.followers.filter((id) => id !== user?._id),
               }
             : userItem
         );
         dispatch(setSuggestedUsers(updatedSuggestedUsers));
 
         // ✅ Update `userProfile.followers` if the logged-in user is viewing the author's profile
-        if (userProfile._id === author._id) {
+        if (userProfile._id === author?._id) {
           const updatedProfile = {
             ...userProfile,
             followers: isFollowingNow
-              ? [...userProfile.followers, user._id]
-              : userProfile.followers.filter((id) => id !== user._id),
+              ? [...userProfile.followers, user?._id]
+              : userProfile.followers.filter((id) => id !== user?._id),
           };
           dispatch(setUserProfile(updatedProfile));
         }
@@ -116,11 +128,25 @@ function PostDialog({ post }) {
 
       if (res.data.success) {
         // ✅ Update Redux store
-        const updatedPostData = posts.filter((postItem) => postItem?._id !== post?._id);
+        const updatedPostData = posts.filter(
+          (postItem) => postItem?._id !== post?._id
+        );
         dispatch(setPosts(updatedPostData));
+        if (user._id === userProfile._id) {
+          const updatedUserProfile = {
+            ...userProfile,
+            posts: userProfile?.posts.filter(
+              (postItem) => postItem?._id !== post?._id
+            ),
+          };
+          dispatch(setUserProfile(updatedUserProfile));
+        }
 
         // ✅ Show success toast
-        setToast({ message: res.data.message || "Post Deleted Successfully", type: "success" });
+        setToast({
+          message: res.data.message || "Post Deleted Successfully",
+          type: "success",
+        });
 
         // ✅ Close modal AFTER toast disappears
         setTimeout(() => setToast(null), 2000);
@@ -154,7 +180,6 @@ function PostDialog({ post }) {
           <div ref={dialogRef} className="bg-white rounded-lg shadow-lg w-80">
             {/* ✅ Follow/Unfollow Button (only show if the author is not the logged-in user) */}
             {user && author && user._id !== author._id && (
-              
               <button
                 onClick={handleFollowToggle}
                 className={`w-full py-2 rounded-t-lg border-b border-gray-300 hover:cursor-pointer ${

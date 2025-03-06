@@ -158,7 +158,7 @@ export const getProfile = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // Find the user and populate the posts along with their comments
+    // Find the user and populate the posts, blogs, bookmarkPosts, and bookmarkBlogs
     const user = await User.findById(userId)
       .populate({
         path: "posts",
@@ -194,11 +194,49 @@ export const getProfile = async (req, res) => {
             },
           },
         ],
-        options: { sort: { createdAt: -1 } }, // Sort posts by latest
+        options: { sort: { createdAt: -1 } }, // Sort blogs by latest
       })
-      .populate("bookmarkPosts")
-      .populate("bookmarkBlogs")
-      .select("-password");
+      .populate({
+        path: "bookmarkPosts",
+        populate: [
+          {
+            path: "author",
+            select: "username profilePicture",
+          },
+          {
+            path: "comments",
+            options: { sort: { createdAt: -1 } }, // Sort comments by latest
+            populate: {
+              path: "author",
+              select: "username profilePicture",
+            },
+          },
+        ],
+      })
+      .populate({
+        path: "bookmarkBlogs",
+        populate: [
+          {
+            path: "author",
+            select: "username profilePicture",
+          },
+          {
+            path: "comments",
+            options: { sort: { createdAt: -1 } }, // Sort comments by latest
+            populate: {
+              path: "author",
+              select: "username profilePicture",
+            },
+          },
+        ],
+      })
+      .select("-password"); // Exclude the password field
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
 
     return res.status(200).json({
       user,

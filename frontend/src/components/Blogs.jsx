@@ -2,13 +2,14 @@ import { useSelector } from "react-redux";
 import Blog from "./Blog";
 
 function Blogs() {
-  const { blogs } = useSelector((store) => store.post);
+  const { blogs = [] } = useSelector((store) => store.post); // Default to an empty array
   const { user } = useSelector((store) => store.auth);
 
+  // Check if user is defined and has following
+  const followingUsers = user?.following || [];
+
   // Filter blogs to only include those from users the current user is following
-  const filteredBlogs = blogs.filter(
-    (blog) => user?.following?.includes(blog?.author?._id)
-  );
+  const filteredBlogs = blogs.filter((blog) => followingUsers.includes(blog?.author?._id));
 
   return (
     <div>

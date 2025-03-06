@@ -26,7 +26,7 @@ const Post = ({ post }) => {
   const [liked, setLiked] = useState(post.likes.includes(user?._id) || false);
   const [loading, setLoading] = useState(true); // 🔄 Add loading state
   const [isBookmark, setIsBookmark] = useState(
-    userProfile?.bookmarks?.some((bookmark) => bookmark._id === post?._id) ||
+    userProfile?.bookmarkPosts?.some((bookmark) => bookmark._id === post?._id) ||
       false
   );
 
@@ -40,7 +40,7 @@ const Post = ({ post }) => {
   }, []);
 
   const changeEventHandler = (e) => {
-    setText(e.target.value.trim());
+    setText(e.target.value);
   };
 
   const LikeOrDisLikeHandler = async () => {
@@ -69,7 +69,7 @@ const Post = ({ post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        if (userProfile && userProfile._id === post.author[0]?._id) {
+        if (userProfile && userProfile._id === post.author?._id) {
           const updatedUserPosts = {
             ...userProfile,
             posts: userProfile.posts.map((p) =>
@@ -93,6 +93,7 @@ const Post = ({ post }) => {
   };
 
   const commentHandler = async () => {
+    const text = text.trim();
     if (!text.trim()) return toast.warning("Comment cannot be empty.");
     if (!user) return toast.error("You must be logged in to comment.");
 
@@ -114,7 +115,7 @@ const Post = ({ post }) => {
         );
         dispatch(setPosts(updatedPosts));
 
-        if (userProfile && userProfile._id === post.author[0]?._id) {
+        if (userProfile && userProfile._id === post.author?._id) {
           const updatedUserPosts = {
             ...userProfile,
             posts: userProfile.posts.map((p) =>
@@ -252,7 +253,6 @@ const Post = ({ post }) => {
             open={open}
             setOpen={setOpen}
             post={post}
-            comments={post.comments}
           />
 
           {/* Add Comment */}

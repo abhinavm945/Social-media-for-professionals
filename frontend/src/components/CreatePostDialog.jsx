@@ -8,6 +8,7 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Toast from "./Toast";
 import { setPosts } from "../redux/postSlice.js";
+import { setUserProfile } from "../redux/authSlice.js";
 
 const CreatePostDialog = ({ open, setOpen }) => {
   const [caption, setCaption] = useState("");
@@ -19,7 +20,7 @@ const CreatePostDialog = ({ open, setOpen }) => {
   const [toast, setToast] = useState(null);
   const dialogRef = useRef(null);
   const emojiPickerRef = useRef(null);
-  const { user } = useSelector((store) => store.auth);
+  const { user, userProfile } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
   const { posts } = useSelector((store) => store.post);
 
@@ -96,6 +97,13 @@ const CreatePostDialog = ({ open, setOpen }) => {
         setImagePreview(null);
         setOpen(false);
         setTimeout(() => setToast(null), 3000);
+        if (userProfile && userProfile._id === user?._id) {
+          const updatedUserPosts = {
+            ...userProfile,
+            posts: [res.data.post, ...(userProfile?.posts ?? [])],
+          };
+          dispatch(setUserProfile(updatedUserPosts));
+        }
       }
     } catch (error) {
       setToast({

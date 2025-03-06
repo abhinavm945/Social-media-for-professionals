@@ -3,20 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { setBlogs } from "../redux/postSlice.js";
-import { setUserProfile, setSuggestedUsers } from "../redux/authSlice.js";
+import { setUserProfile, setSuggestedUsers, setAuthUser } from "../redux/authSlice.js";
 
 function BlogDialog({ blog }) {
   const [open, setOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
   const dispatch = useDispatch();
 
   const dialogRef = useRef(null);
-  const { user, userProfile, suggestedUsers } = useSelector((store) => store.auth);
+  const { user, userProfile, suggestedUsers } = useSelector(
+    (store) => store.auth
+  );
   const { blogs } = useSelector((store) => store.post);
   const author = blog?.author || null;
 
   // Check if the logged-in user is following the blog author
-  const isFollowing = author ? userProfile?.followers.includes(author._id) : false;
+  const isFollowing = author
+    ? userProfile?.followers.includes(author._id)
+    : false;
   const [following, setFollowing] = useState(isFollowing);
 
   useEffect(() => {
@@ -53,15 +56,23 @@ function BlogDialog({ blog }) {
       if (res.data.success) {
         const isFollowingNow = !following;
         setFollowing(isFollowingNow);
-        setToastMessage({ message: res.data.message, type: "success" });
+
+        const updatedAuthUser = {
+                  ...user,
+                  following: isFollowing
+                    ? user.following.filter((id) => id !== author?._id) // Remove from following
+                    : [...user.following, author?._id], // Add to following
+                };
+        
+                dispatch(setAuthUser(updatedAuthUser));
 
         // Update `userProfile` if logged-in user is performing the action
         if (user._id === userProfile._id) {
           const updatedUserProfile = {
             ...userProfile,
             following: isFollowingNow
-              ? [...userProfile.following, author._id]
-              : userProfile.following.filter((id) => id !== author._id),
+              ? [...userProfile.following, author?._id]
+              : userProfile.following.filter((id) => id !== author?._id),
           };
           dispatch(setUserProfile(updatedUserProfile));
         }
@@ -89,16 +100,9 @@ function BlogDialog({ blog }) {
           };
           dispatch(setUserProfile(updatedProfile));
         }
-
-        // Hide toast after a few seconds
-        setTimeout(() => setToastMessage(null), 2000);
       }
     } catch (error) {
-      setToastMessage({
-        message: error.response?.data?.message || "An error occurred",
-        type: "error",
-      });
-      setTimeout(() => setToastMessage(null), 2000);
+      console.log(error);
     }
   };
 
@@ -114,22 +118,21 @@ function BlogDialog({ blog }) {
 
       if (res.data.success) {
         // Update Redux store
-        const updatedBlogs = blogs.filter((blogItem) => blogItem?._id !== blog?._id);
+        const updatedBlogs = blogs.filter(
+          (blogItem) => blogItem?._id !== blog?._id
+        );
         dispatch(setBlogs(updatedBlogs));
 
-        // Show success toast
-        setToastMessage({ message: res.data.message || "Blog Deleted Successfully", type: "success" });
-
-        // Close modal AFTER toast disappears
-        setTimeout(() => setToastMessage(null), 2000);
-        setTimeout(() => setOpen(false), 2500);
+        if (user._id === userProfile._id) {
+          const updatedUserProfile = {
+            ...userProfile,
+            blogs: userProfile?.blogs.filter((blogItem) => blogItem?._id !== blog._id),
+          };
+          dispatch(setUserProfile(updatedUserProfile));
+        }
       }
     } catch (error) {
-      setToastMessage({
-        message: error.response?.data?.message || "An error occurred",
-        type: "error",
-      });
-      setTimeout(() => setToastMessage(null), 2000);
+      console.log(error);
     }
   };
 
@@ -146,12 +149,6 @@ function BlogDialog({ blog }) {
       {/* Dialog Box Overlay */}
       {open && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-          {toastMessage && (
-            <div className={`toast ${toastMessage.type}`}>
-              {toastMessage.message}
-            </div>
-          )}
-
           {/* Dialog Content */}
           <div ref={dialogRef} className="bg-white rounded-lg shadow-lg w-80">
             {/* Follow/Unfollow Button (only show if the author is not the logged-in user) */}

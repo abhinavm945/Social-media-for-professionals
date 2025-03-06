@@ -307,7 +307,7 @@ function Profile() {
             <div className="flex flex-col gap-4 max-w-xl mx-auto">
               {displayedBlogs?.length > 0 ? (
                 displayedBlogs.map((blog) => (
-                  <Blog key={blog._id} blog={blog} />
+                  <Blog key={blog?._id} blog={blog} />
                 ))
               ) : (
                 <p className="text-center text-gray-500">No blogs available.</p>
