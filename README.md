@@ -1,4 +1,4 @@
-# Trending Posts & Blogs Platform
+# Social Media for Professional Platform
 
 A modern and responsive web application that showcases trending posts and blogs based on engagement metrics such as likes and comments.
 
@@ -90,6 +90,10 @@ vercel deploy
 3. Commit your changes: `git commit -m 'Add new feature'`
 4. Push to the branch: `git push origin feature-name`
 5. Open a Pull Request.
+
+
+## 📄 Demo Video
+You can see the demo first of this platform with the link https://www.jioaicloud.com/l/?u=sO3-9ekyf7Umdu9dAsmul9gLLOMeF6QotW2swgvDDua_wXtaUanixYqjb69PYOC9VaU .
 
 ## 📄 License
 This project is licensed under me, Please contact me befor use.
